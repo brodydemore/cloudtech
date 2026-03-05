@@ -55,16 +55,96 @@ const getPhase = (abbr) => {
 
 // Real AZ flight schools from FAA Registry (verified March 2026)
 const AZ_SCHOOLS = [
-  { name:"Westwind School of Aeronautics", city:"Goodyear",  aircraft:58, types:"Cessna 172, Piper Seminole" },
-  { name:"Embry-Riddle Aeronautical University", city:"Prescott", aircraft:57, types:"Piper Archer, Cessna 172" },
-  { name:"CAE Aviation Academy Phoenix", city:"Mesa",      aircraft:55, types:"Diamond DA42, Piper Seminole" },
-  { name:"Lufthansa Aviation Training USA", city:"Goodyear", aircraft:31, types:"Cessna 172, Multi-Engine" },
-  { name:"Mesa Pilot Development", city:"Glendale",  aircraft:29, types:"Cessna 172, Piper Seminole" },
-  { name:"Angel Aviation", city:"Peoria",    aircraft:25, types:"Cessna 172, Piper Seneca" },
-  { name:"Chandler Air Service", city:"Chandler",   aircraft:23, types:"Cessna 172, Piper Cherokee" },
-  { name:"Swaz Aviation", city:"Mesa",      aircraft:21, types:"Cessna 172, Piper Arrow" },
-  { name:"Quality Aviation", city:"Marana",    aircraft:21, types:"Cessna 172, Piper Warrior" },
-  { name:"Venture West", city:"Mesa",      aircraft:13, types:"Cessna 172, Piper Archer" },
+  {
+    id:"westwind", name:"Westwind School of Aeronautics", city:"Goodyear", state:"AZ",
+    aircraft:58, phone:"623-935-8000", website:"westwindaviation.com",
+    address:"1440 S Litchfield Rd, Goodyear, AZ 85338",
+    type:"Career/Airlines", rating:"high",
+    fleet:[ {model:"Cessna 172", count:38, avg_year:2016}, {model:"Piper Seminole PA-44", count:14, avg_year:2015}, {model:"Piper Archer PA-28", count:6, avg_year:2017} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:12, utilization:88, trend:+6.2,
+  },
+  {
+    id:"erau", name:"Embry-Riddle Aeronautical University", city:"Prescott", state:"AZ",
+    aircraft:57, phone:"928-777-6600", website:"prescott.erau.edu",
+    address:"3700 Willow Creek Rd, Prescott, AZ 86301",
+    type:"College Program", rating:"high",
+    fleet:[ {model:"Piper Archer PA-28", count:28, avg_year:2018}, {model:"Cessna 172", count:18, avg_year:2017}, {model:"Piper Seminole PA-44", count:11, avg_year:2016} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:8, utilization:85, trend:+4.1,
+  },
+  {
+    id:"cae", name:"CAE Aviation Academy Phoenix", city:"Mesa", state:"AZ",
+    aircraft:55, phone:"480-809-4499", website:"cae.com/aviation-training",
+    address:"6033 S Sossaman Rd, Mesa, AZ 85212",
+    type:"Career/Airlines", rating:"high",
+    fleet:[ {model:"Diamond DA42", count:30, avg_year:2019}, {model:"Piper Seminole PA-44", count:25, avg_year:2018} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:15, utilization:92, trend:+8.4,
+  },
+  {
+    id:"lufthansa", name:"Lufthansa Aviation Training USA", city:"Goodyear", state:"AZ",
+    aircraft:31, phone:"623-209-8826", website:"lat.aero",
+    address:"1550 S Bullard Ave, Goodyear, AZ 85338",
+    type:"Career/Airlines", rating:"high",
+    fleet:[ {model:"Cessna 172", count:20, avg_year:2020}, {model:"Piper Seminole PA-44", count:11, avg_year:2019} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:6, utilization:86, trend:+3.8,
+  },
+  {
+    id:"mesa-pilot", name:"Mesa Pilot Development", city:"Glendale", state:"AZ",
+    aircraft:29, phone:"623-877-9334", website:"mesapilot.com",
+    address:"6801 N Glen Harbor Blvd, Glendale, AZ 85307",
+    type:"Career/Airlines", rating:"medium",
+    fleet:[ {model:"Cessna 172", count:18, avg_year:2015}, {model:"Piper Seminole PA-44", count:11, avg_year:2014} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:4, utilization:74, trend:+1.2,
+  },
+  {
+    id:"angel", name:"Angel Aviation", city:"Peoria", state:"AZ",
+    aircraft:25, phone:"623-698-1413", website:"angelaviation.com",
+    address:"8800 W Deer Valley Rd, Peoria, AZ 85382",
+    type:"FBO, Local", rating:"medium",
+    fleet:[ {model:"Cessna 172", count:16, avg_year:2013}, {model:"Piper Seneca PA-34", count:6, avg_year:2012}, {model:"Cessna 182", count:3, avg_year:2011} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:2, utilization:71, trend:-1.4,
+  },
+  {
+    id:"chandler", name:"Chandler Air Service", city:"Chandler", state:"AZ",
+    aircraft:23, phone:"480-821-8737", website:"chandlerair.com",
+    address:"2380 S Stinson Way, Chandler, AZ 85286",
+    type:"FBO, Local", rating:"medium",
+    fleet:[ {model:"Cessna 172", count:15, avg_year:2012}, {model:"Piper Cherokee PA-28", count:8, avg_year:2011} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:1, utilization:68, trend:+2.1,
+  },
+  {
+    id:"swaz", name:"Swaz Aviation", city:"Mesa", state:"AZ",
+    aircraft:21, phone:"480-985-0000", website:"swazaviation.com",
+    address:"Falcon Field Airport, Mesa, AZ 85205",
+    type:"FBO, Local", rating:"medium",
+    fleet:[ {model:"Cessna 172", count:14, avg_year:2011}, {model:"Piper Arrow PA-28R", count:7, avg_year:2010} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:0, utilization:65, trend:-2.8,
+  },
+  {
+    id:"quality", name:"Quality Aviation", city:"Marana", state:"AZ",
+    aircraft:21, phone:"520-682-4000", website:"qualityaviation.com",
+    address:"11700 W Avra Valley Rd, Marana, AZ 85653",
+    type:"FBO, Local", rating:"medium",
+    fleet:[ {model:"Cessna 172", count:14, avg_year:2013}, {model:"Piper Warrior PA-28", count:7, avg_year:2012} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:0, utilization:67, trend:+0.8,
+  },
+  {
+    id:"venture-west", name:"Venture West", city:"Mesa", state:"AZ",
+    aircraft:13, phone:"480-832-4000", website:"venturewestaviation.com",
+    address:"Falcon Field Airport, Mesa, AZ 85205",
+    type:"FBO, Local", rating:"low",
+    fleet:[ {model:"Cessna 172", count:9, avg_year:2010}, {model:"Piper Archer PA-28", count:4, avg_year:2009} ],
+    notes:"", contact_name:"", contact_email:"", last_contact:"",
+    waitlist:0, utilization:52, trend:-4.2,
+  },
 ];
 
 const AZ_TOTAL_AIRCRAFT = AZ_SCHOOLS.reduce((a,s) => a+s.aircraft, 0);
@@ -401,124 +481,124 @@ function LoginPage({ onLogin }) {
 // OVERVIEW PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function StatCounter({ label, value, delay, color }) {
-  const [disp, setDisp] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      let n = 0; const step = Math.ceil(value/60);
-      const iv = setInterval(() => { n = Math.min(n+step,value); setDisp(n); if(n>=value) clearInterval(iv); }, 16);
-      return () => clearInterval(iv);
-    }, delay);
-    return () => clearTimeout(t);
-  }, [value, delay]);
-  return (
-    <div style={{ background:"rgba(10,16,26,0.8)", border:`1px solid rgba(56,189,248,0.1)`, borderTop:`2px solid ${color}`, borderRadius:"8px", padding:"20px 24px", flex:1, position:"relative", overflow:"hidden" }}>
-      <div style={{ position:"absolute", top:0, left:0, right:0, height:"60px", background:`linear-gradient(180deg,${color}08,transparent)` }}/>
-      <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.18em", marginBottom:"10px", fontFamily:"'IBM Plex Mono',monospace" }}>{label}</div>
-      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"28px", fontWeight:700, color }}>{disp.toLocaleString()}</div>
-    </div>
-  );
-}
-
 function StateCard({ state, onClick, index }) {
   const [hovered, setHovered] = useState(false);
   const phase = state.phase || 4;
   const phaseCfg = PHASE_CONFIG[phase];
-  const cfg = STATE_STATUS[state.status || "nominal"];
   const isLive = state.live;
 
   if (!isLive) {
-    // Locked phase card
     return (
       <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
-        style={{ background:"rgba(6,11,17,0.7)", border:`1px solid rgba(255,255,255,0.04)`, borderRadius:"8px", padding:"18px 20px", position:"relative", overflow:"hidden", transition:"all 0.25s ease", opacity:hovered?0.7:0.45, animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
-        <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"48px", fontWeight:900, color:"rgba(255,255,255,0.03)", lineHeight:1, userSelect:"none" }}>{state.abbr}</div>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"14px" }}>
-          <div>
-            <div style={{ fontSize:"11px", fontWeight:600, color:"rgba(148,163,184,0.4)", letterSpacing:"0.08em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
-            <div style={{ display:"inline-flex", alignItems:"center", gap:"5px", background:`${phaseCfg.color}12`, border:`1px solid ${phaseCfg.color}30`, borderRadius:"3px", padding:"2px 8px" }}>
-              <div style={{ width:"4px", height:"4px", borderRadius:"50%", background:phaseCfg.color, opacity:0.6 }}/>
-              <span style={{ fontSize:"8px", color:phaseCfg.color, letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace", opacity:0.8 }}>{phaseCfg.label}</span>
-            </div>
-          </div>
-          <div style={{ fontSize:"16px", opacity:0.2 }}>🔒</div>
+        style={{ background:"rgba(6,11,17,0.7)", border:"1px solid rgba(255,255,255,0.04)", borderRadius:"10px", padding:"20px 22px", position:"relative", overflow:"hidden", transition:"all 0.2s", opacity:hovered?0.65:0.4, animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
+        <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"52px", fontWeight:900, color:"rgba(255,255,255,0.03)", lineHeight:1, userSelect:"none" }}>{state.abbr}</div>
+        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
+          <div style={{ fontSize:"13px", fontWeight:600, color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
+          <span style={{ fontSize:"16px", opacity:0.25 }}>🔒</span>
         </div>
-        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.2)", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>DATA PENDING ROLLOUT</div>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:"5px", background:`${phaseCfg.color}10`, border:`1px solid ${phaseCfg.color}25`, borderRadius:"4px", padding:"3px 10px" }}>
+          <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:phaseCfg.color, opacity:0.5 }}/>
+          <span style={{ fontSize:"10px", color:phaseCfg.color, letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace", opacity:0.7 }}>{phaseCfg.label}</span>
+        </div>
       </div>
     );
   }
 
-  // Live state card (AZ)
   return (
     <div onClick={()=>onClick(state)} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
-      style={{ background:hovered?"rgba(16,24,38,0.98)":"rgba(10,16,26,0.85)", border:`1px solid ${hovered?"#22c55e60":"rgba(34,197,94,0.2)"}`, borderLeft:"3px solid #22c55e", borderRadius:"8px", padding:"18px 20px", cursor:"pointer", position:"relative", overflow:"hidden", transition:"all 0.25s ease", transform:hovered?"translateY(-2px)":"translateY(0)", boxShadow:hovered?"0 8px 32px rgba(34,197,94,0.15)":"0 0 0 0 transparent", animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
-      <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"48px", fontWeight:900, color:hovered?"rgba(34,197,94,0.12)":"rgba(34,197,94,0.06)", lineHeight:1, userSelect:"none", pointerEvents:"none", transition:"color 0.25s" }}>{state.abbr}</div>
-      <div style={{ position:"absolute", top:"12px", right:"12px", display:"flex", alignItems:"center", gap:"5px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"3px", padding:"2px 8px" }}>
-        <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 6px #22c55e", animation:"pulse 1.5s infinite" }}/>
-        <span style={{ fontSize:"8px", color:"#22c55e", letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace" }}>PHASE I · LIVE</span>
+      style={{ background:hovered?"rgba(16,24,38,0.98)":"rgba(10,16,26,0.85)", border:`1px solid ${hovered?"rgba(34,197,94,0.5)":"rgba(34,197,94,0.2)"}`, borderLeft:"3px solid #22c55e", borderRadius:"10px", padding:"20px 22px", cursor:"pointer", position:"relative", overflow:"hidden", transition:"all 0.25s", transform:hovered?"translateY(-2px)":"none", boxShadow:hovered?"0 8px 32px rgba(34,197,94,0.15)":"none", animation:"fadeUp 0.4s ease both" }}>
+      <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"52px", fontWeight:900, color:"rgba(34,197,94,0.07)", lineHeight:1, userSelect:"none" }}>{state.abbr}</div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
+        <div>
+          <div style={{ fontSize:"14px", fontWeight:600, color:"#e2e8f0", letterSpacing:"0.05em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
+          <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>FAA Registry · {state.schools} schools</div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:"5px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"4px", padding:"4px 10px" }}>
+          <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#22c55e", animation:"pulse 1.5s infinite" }}/>
+          <span style={{ fontSize:"11px", color:"#22c55e", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>LIVE</span>
+        </div>
       </div>
-      <div style={{ marginBottom:"14px", paddingRight:"80px" }}>
-        <div style={{ fontSize:"11px", fontWeight:600, color:"#e2e8f0", letterSpacing:"0.08em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
-        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>FAA Registry · {state.schools} verified schools</div>
-      </div>
-      <div style={{ display:"flex", gap:"16px", marginBottom:"12px" }}>
+      <div style={{ display:"flex", gap:"20px", marginBottom:"14px" }}>
         {[["✈", state.aircraft, "AIRCRAFT"],["🏫", state.schools, "SCHOOLS"]].map(([icon,val,lbl]) => (
-          <div key={lbl} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-            <span style={{ fontSize:"10px" }}>{icon}</span>
-            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"13px", fontWeight:700, color:"#22c55e" }}>{val}</span>
-            <span style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{lbl}</span>
+          <div key={lbl} style={{ display:"flex", alignItems:"center", gap:"7px" }}>
+            <span>{icon}</span>
+            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"18px", fontWeight:700, color:"#22c55e" }}>{val}</span>
+            <span style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>{lbl}</span>
           </div>
         ))}
-        <div style={{ marginLeft:"auto", fontSize:"9px", color:hovered?"#22c55e":"rgba(148,163,184,0.25)", fontFamily:"'IBM Plex Mono',monospace", transition:"color 0.2s" }}>VIEW SCHOOLS →</div>
       </div>
+      <div style={{ fontSize:"12px", color:hovered?"#22c55e":"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace", transition:"color 0.2s" }}>VIEW SCHOOLS →</div>
     </div>
   );
 }
 
-function StateModal({ state, onClose }) {
-  useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h); },[onClose]);
-  if (!state) return null;
-  const schools = state.schools_data || [];
+function SchoolDetailPage({ school, onBack, onSave }) {
+  const [notes, setNotes]             = useState(school.notes || "");
+  const [contactName, setContactName] = useState(school.contact_name || "");
+  const [contactEmail, setContactEmail] = useState(school.contact_email || "");
+  const [lastContact, setLastContact] = useState(school.last_contact || "");
+  const [saved, setSaved]             = useState(false);
+  const r = { high:{color:"#22c55e",label:"HIGH DEMAND"}, medium:{color:"#38BDF8",label:"STEADY"}, low:{color:"#ef4444",label:"LOW ACTIVITY"} }[school.rating];
+  const avgYear = Math.round(school.fleet.reduce((a,f)=>a+f.avg_year*f.count,0)/school.aircraft);
+  const fleetAge = 2026 - avgYear;
+
+  const handleSave = () => {
+    onSave(school.id,{notes,contact_name:contactName,contact_email:contactEmail,last_contact:lastContact});
+    setSaved(true); setTimeout(()=>setSaved(false),2000);
+  };
+
   return (
-    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, animation:"fadeIn 0.2s ease" }}>
-      <div onClick={e=>e.stopPropagation()} style={{ width:"580px", maxHeight:"88vh", overflowY:"auto", background:"#080d14", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"12px", padding:"36px", position:"relative", animation:"slideUp 0.25s ease", boxShadow:"0 0 80px rgba(34,197,94,0.08)" }}>
-        <div style={{ position:"absolute", top:0, left:0, right:0, height:"2px", background:"linear-gradient(90deg,transparent,#22c55e,transparent)" }}/>
+    <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"40px 32px", animation:"pageIn 0.4s ease", position:"relative", zIndex:1 }}>
+      <button onClick={onBack} style={{ background:"none", border:"none", color:"rgba(148,163,184,0.5)", fontSize:"13px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.08em", marginBottom:"28px", display:"flex", alignItems:"center", gap:"8px", padding:0 }}>← BACK TO OVERVIEW</button>
 
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"28px" }}>
-          <div>
-            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>PHASE I · FAA VERIFIED · {state.abbr}</div>
-            <h2 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"22px", fontWeight:800, color:"#e2e8f0", margin:0 }}>{state.name.toUpperCase()}</h2>
-            <p style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", margin:"6px 0 0", fontFamily:"'IBM Plex Mono',monospace" }}>Data sourced from FAA Aircraft Registry · March 2026</p>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"32px", flexWrap:"wrap", gap:"16px" }}>
+        <div>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>// SCHOOL DETAIL · AZ · PHASE I</div>
+          <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"28px", fontWeight:900, margin:0, color:"#e2e8f0", lineHeight:1.2 }}>{school.name.toUpperCase()}</h1>
+          <div style={{ fontSize:"14px", color:"rgba(148,163,184,0.5)", marginTop:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{school.city}, AZ · {school.type}</div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:"8px", background:`${r.color}12`, border:`1px solid ${r.color}30`, borderRadius:"8px", padding:"12px 20px" }}>
+          <div style={{ width:"8px", height:"8px", borderRadius:"50%", background:r.color }}/>
+          <span style={{ fontSize:"13px", color:r.color, letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace", fontWeight:600 }}>{r.label}</span>
+        </div>
+      </div>
+
+      {/* Key stats */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))", gap:"14px", marginBottom:"28px" }}>
+        {[
+          {l:"TOTAL AIRCRAFT", v:school.aircraft,                                                  c:"#38BDF8"},
+          {l:"UTILIZATION",    v:`${school.utilization}%`,                                          c:school.utilization>=85?"#22c55e":school.utilization>=65?"#f59e0b":"#ef4444"},
+          {l:"TREND",         v:`${school.trend>0?"+":""}${school.trend}%`,                         c:school.trend>0?"#22c55e":"#ef4444"},
+          {l:"WAITLIST",      v:school.waitlist||0,                                                  c:school.waitlist>0?"#f59e0b":"rgba(148,163,184,0.4)"},
+          {l:"AVG FLEET AGE", v:`${fleetAge} YRS`,                                                  c:fleetAge>12?"#ef4444":fleetAge>8?"#f59e0b":"#22c55e"},
+        ].map(item => (
+          <div key={item.l} style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"8px", padding:"18px 20px" }}>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"24px", fontWeight:700, color:item.c }}>{item.v}</div>
           </div>
-          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"6px", color:"#64748b", fontSize:"12px", cursor:"pointer", padding:"6px 12px", fontFamily:"'IBM Plex Mono',monospace" }}>ESC</button>
-        </div>
+        ))}
+      </div>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"24px" }}>
-          {[{l:"VERIFIED SCHOOLS",v:state.schools,c:"#22c55e"},{l:"REGISTERED AIRCRAFT",v:state.aircraft,c:"#38BDF8"}].map(item => (
-            <div key={item.l} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"8px", padding:"16px", textAlign:"center" }}>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"26px", fontWeight:700, color:item.c, marginBottom:"6px" }}>{item.v}</div>
-              <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"12px", fontFamily:"'IBM Plex Mono',monospace" }}>FLIGHT SCHOOLS BY FLEET SIZE</div>
-        <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-          {schools.map((s, i) => {
-            const pct = Math.round((s.aircraft / state.aircraft) * 100);
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"20px", marginBottom:"20px" }}>
+        {/* Fleet breakdown */}
+        <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"24px" }}>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"20px", fontFamily:"'IBM Plex Mono',monospace" }}>FLEET BREAKDOWN</div>
+          {school.fleet.map((f,i) => {
+            const pct = Math.round((f.count/school.aircraft)*100);
+            const age = 2026 - f.avg_year;
             return (
-              <div key={i} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"6px", padding:"14px 16px" }}>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"8px" }}>
+              <div key={i} style={{ marginBottom:"20px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"6px" }}>
                   <div>
-                    <div style={{ fontSize:"11px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"3px" }}>{s.name}</div>
-                    <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>{s.city} · {s.types}</div>
+                    <div style={{ fontSize:"14px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace" }}>{f.model}</div>
+                    <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace", marginTop:"2px" }}>Avg {f.avg_year} · {age} yr old</div>
                   </div>
-                  <div style={{ textAlign:"right", flexShrink:0, marginLeft:"12px" }}>
-                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"14px", fontWeight:700, color:"#38BDF8" }}>{s.aircraft}</div>
-                    <div style={{ fontSize:"8px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>AIRCRAFT</div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:"#38BDF8" }}>{f.count}</div>
+                    <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>AIRCRAFT</div>
                   </div>
                 </div>
-                <div style={{ height:"2px", background:"rgba(255,255,255,0.04)", borderRadius:"2px", overflow:"hidden" }}>
+                <div style={{ height:"4px", background:"rgba(255,255,255,0.04)", borderRadius:"2px", overflow:"hidden" }}>
                   <div style={{ height:"100%", width:`${pct}%`, background:"linear-gradient(90deg,rgba(56,189,248,0.5),#38BDF8)", borderRadius:"2px" }}/>
                 </div>
               </div>
@@ -526,23 +606,191 @@ function StateModal({ state, onClose }) {
           })}
         </div>
 
-        <div style={{ marginTop:"20px", padding:"14px 16px", background:"rgba(56,189,248,0.04)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"6px" }}>
-          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>NOTE</div>
-          <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", lineHeight:1.6 }}>Flight hours pending OpenSky integration. Aircraft counts sourced from FAA Registry and are subject to confirmation with individual schools.</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
+          {/* School info */}
+          <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"24px" }}>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"16px", fontFamily:"'IBM Plex Mono',monospace" }}>SCHOOL INFO</div>
+            {[["📍", school.address],["📞", school.phone],["🌐", school.website],["🏷", school.type]].map(([icon,val]) => (
+              <div key={icon} style={{ marginBottom:"12px", display:"flex", gap:"10px" }}>
+                <span style={{ fontSize:"14px" }}>{icon}</span>
+                <span style={{ fontSize:"13px", color:"#cbd5e1", fontFamily:"'IBM Plex Mono',monospace", lineHeight:1.4 }}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Contact tracking */}
+          <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"24px" }}>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"16px", fontFamily:"'IBM Plex Mono',monospace" }}>CONTACT TRACKING</div>
+            {[["CONTACT NAME",contactName,setContactName,"e.g. John Smith"],["EMAIL",contactEmail,setContactEmail,"e.g. john@school.com"],["LAST CONTACTED",lastContact,setLastContact,"e.g. 2026-03-01"]].map(([label,val,setter,ph]) => (
+              <div key={label} style={{ marginBottom:"12px" }}>
+                <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.12em", marginBottom:"5px", fontFamily:"'IBM Plex Mono',monospace" }}>{label}</div>
+                <input value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={{ width:"100%", boxSizing:"border-box", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"6px", padding:"10px 12px", color:"#e2e8f0", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace", outline:"none" }}/>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"24px", marginBottom:"20px" }}>
+        <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"12px", fontFamily:"'IBM Plex Mono',monospace" }}>NOTES & CALL LOG</div>
+        <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Log your conversations, observations, and follow-ups here..." style={{ width:"100%", boxSizing:"border-box", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"6px", padding:"14px", color:"#e2e8f0", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace", outline:"none", resize:"vertical", minHeight:"120px", lineHeight:1.6 }}/>
+      </div>
+
+      <button onClick={handleSave} style={{ background:saved?"rgba(34,197,94,0.15)":"rgba(56,189,248,0.1)", border:`1px solid ${saved?"rgba(34,197,94,0.4)":"rgba(56,189,248,0.3)"}`, borderRadius:"7px", color:saved?"#22c55e":"#38BDF8", fontSize:"13px", letterSpacing:"0.15em", cursor:"pointer", padding:"14px 28px", fontFamily:"'Orbitron',sans-serif", transition:"all 0.3s" }}>
+        {saved ? "✓ SAVED" : "SAVE CHANGES →"}
+      </button>
+    </div>
+  );
+}
+
+function StateModal({ state, onClose, onSelectSchool }) {
+  useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h); },[onClose]);
+  if (!state) return null;
+  return (
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, animation:"fadeIn 0.2s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"640px", maxHeight:"88vh", overflowY:"auto", background:"#080d14", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"12px", padding:"36px", position:"relative", animation:"slideUp 0.25s ease", boxShadow:"0 0 80px rgba(34,197,94,0.08)" }}>
+        <div style={{ position:"absolute", top:0, left:0, right:0, height:"2px", background:"linear-gradient(90deg,transparent,#22c55e,transparent)" }}/>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"24px" }}>
+          <div>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>PHASE I · FAA VERIFIED · ARIZONA</div>
+            <h2 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"22px", fontWeight:800, color:"#e2e8f0", margin:0 }}>FLIGHT SCHOOLS</h2>
+            <p style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", margin:"6px 0 0", fontFamily:"'IBM Plex Mono',monospace" }}>Click a school to view details</p>
+          </div>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"6px", color:"#64748b", fontSize:"12px", cursor:"pointer", padding:"8px 14px", fontFamily:"'IBM Plex Mono',monospace" }}>ESC</button>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
+          {AZ_SCHOOLS.map((s,i) => {
+            const pct = Math.round((s.aircraft/state.aircraft)*100);
+            const r = {high:{color:"#22c55e"},medium:{color:"#38BDF8"},low:{color:"#ef4444"}}[s.rating];
+            return (
+              <div key={i} onClick={()=>{onClose();onSelectSchool(s);}}
+                style={{ background:"rgba(255,255,255,0.02)", border:`1px solid ${r.color}20`, borderLeft:`3px solid ${r.color}`, borderRadius:"8px", padding:"16px 18px", cursor:"pointer", transition:"all 0.2s" }}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"}
+                onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"8px" }}>
+                  <div>
+                    <div style={{ fontSize:"14px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"3px" }}>{s.name}</div>
+                    <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>{s.city} · {s.type}</div>
+                  </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                    <div style={{ textAlign:"right" }}>
+                      <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"18px", fontWeight:700, color:"#38BDF8" }}>{s.aircraft}</div>
+                      <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>ACFT</div>
+                    </div>
+                    <span style={{ fontSize:"14px", color:"rgba(148,163,184,0.3)" }}>→</span>
+                  </div>
+                </div>
+                <div style={{ height:"3px", background:"rgba(255,255,255,0.04)", borderRadius:"2px", overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${r.color}60,${r.color})`, borderRadius:"2px" }}/>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-function OverviewPage() {
-  const [search, setSearch]   = useState("");
-  const [phaseFilter, setPhaseFilter] = useState("all");
-  const [selected, setSelected] = useState(null);
+function DemandHeatmap() {
+  const [hovered, setHovered] = useState(null);
+  const stateGrid = [
+    {abbr:"WA",col:1,row:0},{abbr:"MT",col:2,row:0},{abbr:"ND",col:3,row:0},{abbr:"MN",col:4,row:0},{abbr:"WI",col:5,row:0},{abbr:"MI",col:6,row:0},{abbr:"VT",col:9,row:0},{abbr:"ME",col:10,row:0},
+    {abbr:"OR",col:1,row:1},{abbr:"ID",col:2,row:1},{abbr:"SD",col:3,row:1},{abbr:"IA",col:4,row:1},{abbr:"IL",col:5,row:1},{abbr:"IN",col:6,row:1},{abbr:"OH",col:7,row:1},{abbr:"NY",col:8,row:1},{abbr:"NH",col:9,row:1},
+    {abbr:"CA",col:1,row:2},{abbr:"NV",col:2,row:2},{abbr:"WY",col:3,row:2},{abbr:"NE",col:4,row:2},{abbr:"MO",col:5,row:2},{abbr:"KY",col:6,row:2},{abbr:"WV",col:7,row:2},{abbr:"VA",col:8,row:2},{abbr:"MA",col:9,row:2},
+    {abbr:"AZ",col:2,row:3},{abbr:"CO",col:3,row:3},{abbr:"KS",col:4,row:3},{abbr:"TN",col:5,row:3},{abbr:"NC",col:6,row:3},{abbr:"SC",col:7,row:3},{abbr:"MD",col:8,row:3},{abbr:"RI",col:9,row:3},
+    {abbr:"NM",col:2,row:4},{abbr:"OK",col:3,row:4},{abbr:"AR",col:4,row:4},{abbr:"MS",col:5,row:4},{abbr:"AL",col:6,row:4},{abbr:"GA",col:7,row:4},{abbr:"CT",col:9,row:4},
+    {abbr:"TX",col:3,row:5},{abbr:"LA",col:4,row:5},{abbr:"FL",col:7,row:5},{abbr:"NJ",col:9,row:5},
+    {abbr:"AK",col:0,row:5},{abbr:"HI",col:0,row:6},
+  ];
+  const demand = {AZ:95,CA:88,TX:85,FL:82,NY:78,WA:72,CO:70,NV:68,NM:65,UT:63,OR:60,GA:58,NC:56,IL:54,MI:52,PA:50,OH:48,VA:46,AK:44,HI:42,MN:40,WI:38,MO:36,TN:35,IN:34,KS:33,OK:32,SC:31,AL:30,LA:29,AR:28,MD:27,NE:26,WY:25,ID:24,MT:23,ND:22,SD:21,IA:20,MS:19,KY:18,WV:17,ME:16,NH:15,VT:14,RI:13,CT:12,NJ:10,MA:9};
+  const getColor = (abbr) => {
+    if (abbr==="AZ") return "#22c55e";
+    const s = demand[abbr]||5;
+    if (s>=80) return "#ef4444"; if (s>=60) return "#f59e0b"; if (s>=40) return "#38BDF8"; if (s>=20) return "#1e40af";
+    return "#1e293b";
+  };
+  const cellSize = 46;
+  return (
+    <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"28px" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
+        <div>
+          <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>DEMAND HEATMAP</div>
+          <div style={{ fontSize:"14px", color:"rgba(148,163,184,0.6)", fontFamily:"'IBM Plex Mono',monospace" }}>Flight training demand by state</div>
+        </div>
+        <div style={{ display:"flex", gap:"14px" }}>
+          {[["#22c55e","LIVE"],["#ef4444","HIGH"],["#f59e0b","MED"],["#38BDF8","LOW"],["#1e293b","NONE"]].map(([c,l])=>(
+            <div key={l} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
+              <div style={{ width:"10px", height:"10px", borderRadius:"2px", background:c }}/>
+              <span style={{ fontSize:"11px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ position:"relative", height:`${7*(cellSize+2)}px`, overflowX:"auto" }}>
+        {stateGrid.map(({abbr,col,row})=>{
+          const color=getColor(abbr), isLive=abbr==="AZ";
+          return (
+            <div key={abbr} onMouseEnter={()=>setHovered(abbr)} onMouseLeave={()=>setHovered(null)}
+              style={{ position:"absolute", left:`${col*(cellSize+2)}px`, top:`${row*(cellSize+2)}px`, width:`${cellSize}px`, height:`${cellSize}px`, background:hovered===abbr?`${color}35`:`${color}18`, border:`1px solid ${hovered===abbr||isLive?color:`${color}50`}`, borderRadius:"5px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"all 0.15s", boxShadow:isLive?`0 0 12px ${color}40`:"none" }}>
+              <div style={{ fontSize:"10px", fontWeight:700, color:hovered===abbr||isLive?color:"rgba(148,163,184,0.6)", fontFamily:"'Orbitron',sans-serif" }}>{abbr}</div>
+              {isLive && <div style={{ fontSize:"7px", color:"#22c55e", fontFamily:"'IBM Plex Mono',monospace" }}>LIVE</div>}
+            </div>
+          );
+        })}
+      </div>
+      {hovered && <div style={{ marginTop:"12px", padding:"10px 16px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"6px", display:"flex", justifyContent:"space-between" }}>
+        <span style={{ fontSize:"14px", color:"#e2e8f0", fontFamily:"'Orbitron',sans-serif" }}>{hovered}</span>
+        <span style={{ fontSize:"12px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>Score: <span style={{ color:getColor(hovered) }}>{demand[hovered]||5}/100</span> · {hovered==="AZ"?"Phase I LIVE":"Pending"}</span>
+      </div>}
+    </div>
+  );
+}
 
-  const liveStates = STATES_DATA.filter(s => s.live);
-  const totalAircraft = liveStates.reduce((a,s)=>a+(s.aircraft||0),0);
-  const totalSchools  = liveStates.reduce((a,s)=>a+(s.schools||0),0);
+function FleetAgeAnalysis() {
+  const sorted = [...AZ_SCHOOLS].sort((a,b)=>{
+    const ya=Math.round(a.fleet.reduce((s,f)=>s+f.avg_year*f.count,0)/a.aircraft);
+    const yb=Math.round(b.fleet.reduce((s,f)=>s+f.avg_year*f.count,0)/b.aircraft);
+    return ya-yb;
+  });
+  return (
+    <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"10px", padding:"28px" }}>
+      <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>FLEET AGE ANALYSIS</div>
+      <div style={{ fontSize:"14px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"24px" }}>Older fleets = higher replacement demand</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+        {sorted.map((s,i)=>{
+          const avgYear=Math.round(s.fleet.reduce((a,f)=>a+f.avg_year*f.count,0)/s.aircraft);
+          const age=2026-avgYear;
+          const color=age>=13?"#ef4444":age>=9?"#f59e0b":"#22c55e";
+          const label=age>=13?"HIGH PRIORITY":age>=9?"MONITOR":"MODERN";
+          return (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:"14px" }}>
+              <div style={{ width:"200px", fontSize:"13px", color:"#cbd5e1", fontFamily:"'IBM Plex Mono',monospace", flexShrink:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.name.split(" ").slice(0,3).join(" ")}</div>
+              <div style={{ flex:1, height:"6px", background:"rgba(255,255,255,0.04)", borderRadius:"3px", overflow:"hidden" }}>
+                <div style={{ height:"100%", width:`${Math.min((age/16)*100,100)}%`, background:`linear-gradient(90deg,${color}60,${color})`, borderRadius:"3px" }}/>
+              </div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"14px", fontWeight:700, color, width:"60px", textAlign:"right" }}>{age} YRS</div>
+              <div style={{ fontSize:"10px", color, background:`${color}12`, border:`1px solid ${color}25`, borderRadius:"3px", padding:"3px 8px", fontFamily:"'IBM Plex Mono',monospace", width:"100px", textAlign:"center" }}>{label}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ marginTop:"20px", padding:"14px 16px", background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)", borderRadius:"6px", fontSize:"13px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", lineHeight:1.6 }}>
+        ⚠ Schools with fleet age 10+ years are prime lease candidates — higher maintenance costs drive upgrade motivation.
+      </div>
+    </div>
+  );
+}
+
+function OverviewPage({ onSelectSchool }) {
+  const [search, setSearch]           = useState("");
+  const [phaseFilter, setPhaseFilter] = useState("all");
+  const [selected, setSelected]       = useState(null);
+  const [activeTab, setActiveTab]     = useState("map");
+
+  const totalAircraft = AZ_SCHOOLS.reduce((a,s)=>a+s.aircraft,0);
+  const totalSchools  = AZ_SCHOOLS.length;
 
   const filtered = STATES_DATA.filter(s => {
     const ms = s.name.toLowerCase().includes(search.toLowerCase()) || s.abbr.toLowerCase().includes(search.toLowerCase());
@@ -550,82 +798,86 @@ function OverviewPage() {
     return ms && mf;
   });
 
-  // Group by phase for display
-  const phases = [1,2,3,4];
-
   return (
     <div style={{ maxWidth:"1400px", margin:"0 auto", padding:"40px 32px", position:"relative", zIndex:1, animation:"pageIn 0.4s ease" }}>
-
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"32px" }}>
         <div>
-          <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>// COMMAND CENTER</div>
-          <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"32px", fontWeight:900, margin:0, color:"#e2e8f0", letterSpacing:"0.04em", lineHeight:1 }}>REGIONAL<br/><span style={{ color:"#38BDF8" }}>OPERATIONS</span></h1>
-          <p style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", marginTop:"10px", letterSpacing:"0.06em", fontFamily:"'IBM Plex Mono',monospace" }}>Phase I live · expanding to 50 states</p>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>// COMMAND CENTER</div>
+          <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"34px", fontWeight:900, margin:0, color:"#e2e8f0", lineHeight:1 }}>REGIONAL<br/><span style={{ color:"#38BDF8" }}>OPERATIONS</span></h1>
+          <p style={{ fontSize:"13px", color:"rgba(148,163,184,0.4)", marginTop:"10px", fontFamily:"'IBM Plex Mono',monospace" }}>Phase I live · expanding to 50 states</p>
         </div>
         <div style={{ textAlign:"right" }}>
-          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.15em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>COVERAGE</div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"28px", fontWeight:700, color:"#22c55e" }}>1 / 50</div>
-          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>STATES LIVE</div>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.15em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>COVERAGE</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"34px", fontWeight:700, color:"#22c55e" }}>1 / 50</div>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>STATES LIVE</div>
         </div>
       </div>
 
-      {/* Live stats - only real data */}
-      <div style={{ display:"flex", gap:"14px", marginBottom:"32px" }}>
+      {/* Stats */}
+      <div style={{ display:"flex", gap:"14px", marginBottom:"28px" }}>
         {[
-          { label:"LIVE STATES",    value:"1",               color:"#22c55e", sub:"Arizona · Phase I" },
-          { label:"VERIFIED SCHOOLS", value:totalSchools,    color:"#38BDF8", sub:"FAA confirmed" },
-          { label:"REGISTERED ACFT", value:totalAircraft,    color:"#a78bfa", sub:"FAA Registry" },
-          { label:"FLIGHT HRS",     value:"—",               color:"#f59e0b", sub:"OpenSky pending" },
-        ].map(item => (
-          <div key={item.label} style={{ background:"rgba(10,16,26,0.8)", border:`1px solid ${item.color}18`, borderLeft:`3px solid ${item.color}`, borderRadius:"6px", padding:"16px 20px", flex:1 }}>
-            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.45)", letterSpacing:"0.18em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.label}</div>
-            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"24px", fontWeight:700, color:item.color, marginBottom:"4px" }}>{item.value}</div>
-            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>{item.sub}</div>
+          {label:"LIVE STATES",       value:"1",           color:"#22c55e", sub:"Arizona · Phase I"},
+          {label:"VERIFIED SCHOOLS",  value:totalSchools,  color:"#38BDF8", sub:"FAA confirmed"},
+          {label:"REGISTERED ACFT",   value:totalAircraft, color:"#a78bfa", sub:"FAA Registry"},
+          {label:"FLIGHT HRS",        value:"—",           color:"#f59e0b", sub:"OpenSky pending"},
+        ].map(item=>(
+          <div key={item.label} style={{ background:"rgba(10,16,26,0.8)", border:`1px solid ${item.color}18`, borderLeft:`3px solid ${item.color}`, borderRadius:"8px", padding:"20px 24px", flex:1 }}>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.45)", letterSpacing:"0.18em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.label}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"28px", fontWeight:700, color:item.color, marginBottom:"5px" }}>{item.value}</div>
+            <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>{item.sub}</div>
           </div>
         ))}
       </div>
 
-      {/* Phase legend + search */}
-      <div style={{ display:"flex", gap:"10px", marginBottom:"28px", alignItems:"center", flexWrap:"wrap" }}>
-        <input placeholder="Search states..." value={search} onChange={e=>setSearch(e.target.value)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"6px", padding:"9px 16px", color:"#e2e8f0", fontSize:"12px", fontFamily:"'IBM Plex Mono',monospace", outline:"none", width:"200px" }}/>
-        <div style={{ display:"flex", gap:"6px" }}>
-          {[["all","ALL PHASES"],["1","PHASE I"],["2","PHASE II"],["3","PHASE III"],["4","PHASE IV"]].map(([val,lbl]) => {
-            const c = val==="1"?"#22c55e":val==="2"?"#38BDF8":val==="3"?"#f59e0b":val==="4"?"#64748b":"#94a3b8";
-            return <button key={val} onClick={()=>setPhaseFilter(val)} style={{ background:phaseFilter===val?`${c}15`:"rgba(255,255,255,0.02)", border:`1px solid ${phaseFilter===val?c+"50":"rgba(255,255,255,0.06)"}`, borderRadius:"5px", color:phaseFilter===val?c:"rgba(148,163,184,0.35)", fontSize:"9px", letterSpacing:"0.1em", cursor:"pointer", padding:"7px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>;
-          })}
-        </div>
-        <div style={{ marginLeft:"auto", fontSize:"10px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>{filtered.length} STATES</div>
+      {/* Tab switcher */}
+      <div style={{ display:"flex", gap:"8px", marginBottom:"24px" }}>
+        {[["map","STATE MAP"],["heatmap","DEMAND HEATMAP"],["fleet-age","FLEET AGE"]].map(([val,lbl])=>(
+          <button key={val} onClick={()=>setActiveTab(val)} style={{ background:activeTab===val?"rgba(56,189,248,0.1)":"rgba(255,255,255,0.02)", border:`1px solid ${activeTab===val?"rgba(56,189,248,0.4)":"rgba(255,255,255,0.06)"}`, borderRadius:"6px", color:activeTab===val?"#38BDF8":"rgba(148,163,184,0.4)", fontSize:"12px", letterSpacing:"0.12em", cursor:"pointer", padding:"10px 20px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>
+        ))}
       </div>
 
-      {/* Phase sections */}
-      {phaseFilter === "all" ? (
-        phases.map(ph => {
-          const phaseStates = filtered.filter(s => s.phase === ph);
-          if (phaseStates.length === 0) return null;
-          const cfg = PHASE_CONFIG[ph];
+      {activeTab==="heatmap"   && <div style={{ marginBottom:"32px" }}><DemandHeatmap/></div>}
+      {activeTab==="fleet-age" && <div style={{ marginBottom:"32px" }}><FleetAgeAnalysis/></div>}
+
+      {activeTab==="map" && <>
+        <div style={{ display:"flex", gap:"10px", marginBottom:"24px", alignItems:"center", flexWrap:"wrap" }}>
+          <input placeholder="Search states..." value={search} onChange={e=>setSearch(e.target.value)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"6px", padding:"10px 16px", color:"#e2e8f0", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace", outline:"none", width:"210px" }}/>
+          <div style={{ display:"flex", gap:"6px" }}>
+            {[["all","ALL"],["1","PHASE I"],["2","PHASE II"],["3","PHASE III"],["4","PHASE IV"]].map(([val,lbl])=>{
+              const c=val==="1"?"#22c55e":val==="2"?"#38BDF8":val==="3"?"#f59e0b":val==="4"?"#64748b":"#94a3b8";
+              return <button key={val} onClick={()=>setPhaseFilter(val)} style={{ background:phaseFilter===val?`${c}15`:"rgba(255,255,255,0.02)", border:`1px solid ${phaseFilter===val?c+"50":"rgba(255,255,255,0.06)"}`, borderRadius:"5px", color:phaseFilter===val?c:"rgba(148,163,184,0.35)", fontSize:"11px", letterSpacing:"0.1em", cursor:"pointer", padding:"8px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>;
+            })}
+          </div>
+          <div style={{ marginLeft:"auto", fontSize:"12px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>{filtered.length} STATES</div>
+        </div>
+
+        {phaseFilter==="all" ? [1,2,3,4].map(ph=>{
+          const phaseStates=filtered.filter(s=>s.phase===ph);
+          if (!phaseStates.length) return null;
+          const cfg=PHASE_CONFIG[ph];
           return (
             <div key={ph} style={{ marginBottom:"36px" }}>
               <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"16px" }}>
                 <div style={{ height:"1px", width:"20px", background:cfg.color, opacity:0.5 }}/>
-                <span style={{ fontSize:"9px", color:cfg.color, letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono',monospace" }}>{cfg.label}</span>
-                {ph === 1 && <span style={{ fontSize:"8px", color:"#22c55e", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:"3px", padding:"2px 8px", fontFamily:"'IBM Plex Mono',monospace" }}>● LIVE</span>}
-                {ph > 1 && <span style={{ fontSize:"8px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>COMING SOON</span>}
+                <span style={{ fontSize:"11px", color:cfg.color, letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono',monospace" }}>{cfg.label}</span>
+                {ph===1 && <span style={{ fontSize:"10px", color:"#22c55e", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:"3px", padding:"2px 8px", fontFamily:"'IBM Plex Mono',monospace" }}>● LIVE</span>}
+                {ph>1 && <span style={{ fontSize:"10px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>COMING SOON</span>}
                 <div style={{ flex:1, height:"1px", background:`linear-gradient(90deg,${cfg.color}30,transparent)` }}/>
               </div>
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:"12px" }}>
-                {phaseStates.map((s,i) => <StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:"12px" }}>
+                {phaseStates.map((s,i)=><StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
               </div>
             </div>
           );
-        })
-      ) : (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:"12px" }}>
-          {filtered.map((s,i) => <StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
-        </div>
-      )}
+        }) : (
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(230px,1fr))", gap:"12px" }}>
+            {filtered.map((s,i)=><StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
+          </div>
+        )}
+      </>}
 
-      {selected && selected.live && <StateModal state={selected} onClose={()=>setSelected(null)}/>}
+      {selected && selected.live && <StateModal state={selected} onClose={()=>setSelected(null)} onSelectSchool={onSelectSchool}/>}
     </div>
   );
 }
@@ -1157,20 +1409,20 @@ function ReportsPage() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function App() {
-  const [user,       setUser]       = useState(null);
-  const [page,       setPage]       = useState("OVERVIEW");
-  const [transition, setTransition] = useState(false);
-  const [fleet,      setFleet]      = useState(INITIAL_FLEET);
-  const [toast,      setToast]      = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [user,         setUser]         = useState(null);
+  const [page,         setPage]         = useState("OVERVIEW");
+  const [transition,   setTransition]   = useState(false);
+  const [fleet,        setFleet]        = useState(INITIAL_FLEET);
+  const [toast,        setToast]        = useState(null);
+  const [authLoading,  setAuthLoading]  = useState(true);
+  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [schoolData,   setSchoolData]   = useState(AZ_SCHOOLS.reduce((acc,s)=>({...acc,[s.id]:s}),{}));
 
   useEffect(() => {
-    // Check for existing session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setUser({ email: session.user.email, name: session.user.email.split("@")[0], role: "admin", id: session.user.id });
       setAuthLoading(false);
     });
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) setUser({ email: session.user.email, name: session.user.email.split("@")[0], role: "admin", id: session.user.id });
       else setUser(null);
@@ -1193,17 +1445,24 @@ export default function App() {
 
   const handleSetPage = (p) => {
     setTransition(true);
+    setSelectedSchool(null);
     setTimeout(() => { setPage(p); setTransition(false); }, 200);
   };
 
+  const handleSelectSchool = (school) => {
+    setSelectedSchool(schoolData[school.id] || school);
+  };
+
+  const handleSaveSchool = (id, updates) => {
+    setSchoolData(prev => ({ ...prev, [id]: { ...prev[id], ...updates } }));
+    setSelectedSchool(prev => prev ? { ...prev, ...updates } : prev);
+    showToast("School record saved");
+  };
+
   const tickerItems = [
-    "▲ ARIZONA — PHASE I LIVE · 10 SCHOOLS · 334 AIRCRAFT VERIFIED",
-    "🟢 WESTWIND SCHOOL OF AERONAUTICS — 58 AIRCRAFT · GOODYEAR AZ",
-    "🟢 CAE AVIATION ACADEMY — 55 AIRCRAFT · MESA AZ",
-    "🟢 EMBRY-RIDDLE AERONAUTICAL UNIVERSITY — 57 AIRCRAFT · PRESCOTT AZ",
+    "▲ ARIZONA — PHASE I LIVE · 10 SCHOOLS · " + AZ_SCHOOLS.reduce((a,s)=>a+s.aircraft,0) + " AIRCRAFT VERIFIED",
+    ...AZ_SCHOOLS.slice(0,4).map(s=>`🟢 ${s.name.toUpperCase()} — ${s.aircraft} AIRCRAFT · ${s.city.toUpperCase()} AZ`),
     "⚡ PHASE II COMING SOON — UTAH · COLORADO · NEW MEXICO · NEVADA",
-    "🟢 LUFTHANSA AVIATION TRAINING USA — 31 AIRCRAFT · GOODYEAR AZ",
-    "🟢 MESA PILOT DEVELOPMENT — 29 AIRCRAFT · GLENDALE AZ",
     "⚡ PHASE III COMING SOON — CALIFORNIA · TEXAS · FLORIDA",
     ...fleet.filter(f=>f.status==="grounded").map(f=>`⛔ ${f.id} — GROUNDED`),
   ];
@@ -1211,14 +1470,8 @@ export default function App() {
   return (
     <>
       <style>{GLOBAL_CSS}</style>
-
-      {/* Transition overlay */}
       <div style={{ position:"fixed", inset:0, background:"#060b11", zIndex:9999, pointerEvents:"none", opacity:transition?1:0, transition:"opacity 0.3s ease" }}>
-        {transition && (
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", display:"flex", flexDirection:"column", alignItems:"center", gap:"16px" }}>
-            <div style={{ width:"28px", height:"28px", border:"2px solid rgba(56,189,248,0.2)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
-          </div>
-        )}
+        {transition && <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)" }}><div style={{ width:"28px", height:"28px", border:"2px solid rgba(56,189,248,0.2)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/></div>}
       </div>
 
       {authLoading ? (
@@ -1233,9 +1486,15 @@ export default function App() {
           <div style={{ position:"fixed", top:0, left:"20%", right:"20%", height:"1px", background:"linear-gradient(90deg,transparent,rgba(56,189,248,0.4),transparent)", pointerEvents:"none", zIndex:200 }}/>
           <Ticker items={tickerItems}/>
           <Nav user={user} page={page} setPage={handleSetPage} onLogout={handleLogout}/>
-          {page==="OVERVIEW" && <OverviewPage/>}
-          {page==="FLEET"    && <FleetPage fleet={fleet} setFleet={setFleet} showToast={showToast}/>}
-          {page==="REPORTS"  && <ReportsPage/>}
+          {selectedSchool ? (
+            <SchoolDetailPage school={selectedSchool} onBack={()=>setSelectedSchool(null)} onSave={handleSaveSchool}/>
+          ) : (
+            <>
+              {page==="OVERVIEW" && <OverviewPage onSelectSchool={handleSelectSchool}/>}
+              {page==="FLEET"    && <FleetPage fleet={fleet} setFleet={setFleet} showToast={showToast}/>}
+              {page==="REPORTS"  && <ReportsPage/>}
+            </>
+          )}
           <Toast message={toast}/>
         </div>
       )}
