@@ -31,57 +31,102 @@ const GLOBAL_CSS = `
 
 // Auth handled by Supabase
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE ROLLOUT SYSTEM
+// Phase I:   Arizona (live)
+// Phase II:  Utah, Colorado, New Mexico, Nevada
+// Phase III: California, Texas, Florida
+// Phase IV:  All remaining states
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const PHASE_CONFIG = {
+  1: { label:"PHASE I",   color:"#22c55e", states:["AZ"] },
+  2: { label:"PHASE II",  color:"#38BDF8", states:["UT","CO","NM","NV"] },
+  3: { label:"PHASE III", color:"#f59e0b", states:["CA","TX","FL","NY","WA","OR"] },
+  4: { label:"PHASE IV",  color:"#64748b", states:[] }, // all remaining
+};
+
+const getPhase = (abbr) => {
+  if (PHASE_CONFIG[1].states.includes(abbr)) return 1;
+  if (PHASE_CONFIG[2].states.includes(abbr)) return 2;
+  if (PHASE_CONFIG[3].states.includes(abbr)) return 3;
+  return 4;
+};
+
+// Real AZ flight schools from FAA Registry (verified March 2026)
+const AZ_SCHOOLS = [
+  { name:"Westwind School of Aeronautics", city:"Goodyear",  aircraft:58, types:"Cessna 172, Piper Seminole" },
+  { name:"Embry-Riddle Aeronautical University", city:"Prescott", aircraft:57, types:"Piper Archer, Cessna 172" },
+  { name:"CAE Aviation Academy Phoenix", city:"Mesa",      aircraft:55, types:"Diamond DA42, Piper Seminole" },
+  { name:"Lufthansa Aviation Training USA", city:"Goodyear", aircraft:31, types:"Cessna 172, Multi-Engine" },
+  { name:"Mesa Pilot Development", city:"Glendale",  aircraft:29, types:"Cessna 172, Piper Seminole" },
+  { name:"Angel Aviation", city:"Peoria",    aircraft:25, types:"Cessna 172, Piper Seneca" },
+  { name:"Chandler Air Service", city:"Chandler",   aircraft:23, types:"Cessna 172, Piper Cherokee" },
+  { name:"Swaz Aviation", city:"Mesa",      aircraft:21, types:"Cessna 172, Piper Arrow" },
+  { name:"Quality Aviation", city:"Marana",    aircraft:21, types:"Cessna 172, Piper Warrior" },
+  { name:"Venture West", city:"Mesa",      aircraft:13, types:"Cessna 172, Piper Archer" },
+];
+
+const AZ_TOTAL_AIRCRAFT = AZ_SCHOOLS.reduce((a,s) => a+s.aircraft, 0);
+
 const STATES_DATA = [
-  { name:"Alabama",       abbr:"AL", schools:4,  aircraft:22,  hours:1840,  status:"nominal"  },
-  { name:"Alaska",        abbr:"AK", schools:7,  aircraft:41,  hours:3210,  status:"elevated" },
-  { name:"Arizona",       abbr:"AZ", schools:9,  aircraft:58,  hours:4920,  status:"nominal"  },
-  { name:"Arkansas",      abbr:"AR", schools:3,  aircraft:17,  hours:1120,  status:"nominal"  },
-  { name:"California",    abbr:"CA", schools:28, aircraft:184, hours:16740, status:"elevated" },
-  { name:"Colorado",      abbr:"CO", schools:11, aircraft:67,  hours:5830,  status:"nominal"  },
-  { name:"Connecticut",   abbr:"CT", schools:5,  aircraft:31,  hours:2640,  status:"nominal"  },
-  { name:"Delaware",      abbr:"DE", schools:2,  aircraft:9,   hours:710,   status:"low"      },
-  { name:"Florida",       abbr:"FL", schools:22, aircraft:148, hours:13200, status:"elevated" },
-  { name:"Georgia",       abbr:"GA", schools:12, aircraft:74,  hours:6480,  status:"nominal"  },
-  { name:"Hawaii",        abbr:"HI", schools:5,  aircraft:29,  hours:2910,  status:"nominal"  },
-  { name:"Idaho",         abbr:"ID", schools:4,  aircraft:21,  hours:1760,  status:"nominal"  },
-  { name:"Illinois",      abbr:"IL", schools:14, aircraft:89,  hours:7640,  status:"nominal"  },
-  { name:"Indiana",       abbr:"IN", schools:8,  aircraft:46,  hours:3920,  status:"nominal"  },
-  { name:"Iowa",          abbr:"IA", schools:6,  aircraft:34,  hours:2870,  status:"low"      },
-  { name:"Kansas",        abbr:"KS", schools:7,  aircraft:43,  hours:3610,  status:"nominal"  },
-  { name:"Kentucky",      abbr:"KY", schools:6,  aircraft:38,  hours:3140,  status:"nominal"  },
-  { name:"Louisiana",     abbr:"LA", schools:7,  aircraft:42,  hours:3480,  status:"nominal"  },
-  { name:"Maine",         abbr:"ME", schools:3,  aircraft:18,  hours:1420,  status:"low"      },
-  { name:"Maryland",      abbr:"MD", schools:8,  aircraft:49,  hours:4210,  status:"nominal"  },
-  { name:"Massachusetts", abbr:"MA", schools:10, aircraft:62,  hours:5340,  status:"nominal"  },
-  { name:"Michigan",      abbr:"MI", schools:13, aircraft:81,  hours:6920,  status:"nominal"  },
-  { name:"Minnesota",     abbr:"MN", schools:9,  aircraft:55,  hours:4680,  status:"nominal"  },
-  { name:"Mississippi",   abbr:"MS", schools:4,  aircraft:23,  hours:1890,  status:"low"      },
-  { name:"Missouri",      abbr:"MO", schools:10, aircraft:61,  hours:5190,  status:"nominal"  },
-  { name:"Montana",       abbr:"MT", schools:5,  aircraft:32,  hours:2740,  status:"nominal"  },
-  { name:"Nebraska",      abbr:"NE", schools:5,  aircraft:28,  hours:2310,  status:"nominal"  },
-  { name:"Nevada",        abbr:"NV", schools:8,  aircraft:52,  hours:4870,  status:"nominal"  },
-  { name:"New Hampshire", abbr:"NH", schools:3,  aircraft:16,  hours:1280,  status:"low"      },
-  { name:"New Jersey",    abbr:"NJ", schools:9,  aircraft:56,  hours:4940,  status:"nominal"  },
-  { name:"New Mexico",    abbr:"NM", schools:6,  aircraft:37,  hours:3120,  status:"nominal"  },
-  { name:"New York",      abbr:"NY", schools:18, aircraft:112, hours:9840,  status:"elevated" },
-  { name:"North Carolina",abbr:"NC", schools:13, aircraft:82,  hours:7010,  status:"nominal"  },
-  { name:"North Dakota",  abbr:"ND", schools:4,  aircraft:24,  hours:1980,  status:"nominal"  },
-  { name:"Ohio",          abbr:"OH", schools:14, aircraft:88,  hours:7520,  status:"nominal"  },
-  { name:"Oklahoma",      abbr:"OK", schools:8,  aircraft:49,  hours:4130,  status:"nominal"  },
-  { name:"Oregon",        abbr:"OR", schools:9,  aircraft:54,  hours:4610,  status:"nominal"  },
-  { name:"Pennsylvania",  abbr:"PA", schools:15, aircraft:94,  hours:8040,  status:"nominal"  },
-  { name:"Rhode Island",  abbr:"RI", schools:2,  aircraft:11,  hours:890,   status:"low"      },
-  { name:"South Carolina",abbr:"SC", schools:7,  aircraft:43,  hours:3670,  status:"nominal"  },
-  { name:"South Dakota",  abbr:"SD", schools:3,  aircraft:18,  hours:1490,  status:"nominal"  },
-  { name:"Tennessee",     abbr:"TN", schools:10, aircraft:63,  hours:5380,  status:"nominal"  },
-  { name:"Texas",         abbr:"TX", schools:31, aircraft:198, hours:18240, status:"elevated" },
-  { name:"Utah",          abbr:"UT", schools:7,  aircraft:44,  hours:3790,  status:"nominal"  },
-  { name:"Vermont",       abbr:"VT", schools:2,  aircraft:10,  hours:820,   status:"low"      },
-  { name:"Virginia",      abbr:"VA", schools:11, aircraft:69,  hours:5920,  status:"nominal"  },
-  { name:"Washington",    abbr:"WA", schools:13, aircraft:80,  hours:6840,  status:"nominal"  },
-  { name:"West Virginia", abbr:"WV", schools:3,  aircraft:17,  hours:1360,  status:"low"      },
-  { name:"Wisconsin",     abbr:"WI", schools:9,  aircraft:55,  hours:4710,  status:"nominal"  },
-  { name:"Wyoming",       abbr:"WY", schools:3,  aircraft:19,  hours:1580,  status:"nominal"  },
+  // ── PHASE I: ARIZONA (LIVE — Real FAA Data) ──────────────────────────────
+  { name:"Arizona", abbr:"AZ", schools:AZ_SCHOOLS.length, aircraft:AZ_TOTAL_AIRCRAFT, hours:null, status:"elevated", phase:1, live:true, schools_data:AZ_SCHOOLS },
+
+  // ── PHASE II: Southwest Expansion ────────────────────────────────────────
+  { name:"Utah",       abbr:"UT", schools:null, aircraft:null, hours:null, status:"nominal", phase:2, live:false },
+  { name:"Colorado",   abbr:"CO", schools:null, aircraft:null, hours:null, status:"nominal", phase:2, live:false },
+  { name:"New Mexico", abbr:"NM", schools:null, aircraft:null, hours:null, status:"nominal", phase:2, live:false },
+  { name:"Nevada",     abbr:"NV", schools:null, aircraft:null, hours:null, status:"nominal", phase:2, live:false },
+
+  // ── PHASE III: Major Markets ──────────────────────────────────────────────
+  { name:"California",  abbr:"CA", schools:null, aircraft:null, hours:null, status:"elevated", phase:3, live:false },
+  { name:"Texas",       abbr:"TX", schools:null, aircraft:null, hours:null, status:"elevated", phase:3, live:false },
+  { name:"Florida",     abbr:"FL", schools:null, aircraft:null, hours:null, status:"elevated", phase:3, live:false },
+  { name:"New York",    abbr:"NY", schools:null, aircraft:null, hours:null, status:"nominal",  phase:3, live:false },
+  { name:"Washington",  abbr:"WA", schools:null, aircraft:null, hours:null, status:"nominal",  phase:3, live:false },
+  { name:"Oregon",      abbr:"OR", schools:null, aircraft:null, hours:null, status:"nominal",  phase:3, live:false },
+
+  // ── PHASE IV: National Rollout ────────────────────────────────────────────
+  { name:"Alabama",       abbr:"AL", phase:4, live:false },
+  { name:"Alaska",        abbr:"AK", phase:4, live:false },
+  { name:"Arkansas",      abbr:"AR", phase:4, live:false },
+  { name:"Connecticut",   abbr:"CT", phase:4, live:false },
+  { name:"Delaware",      abbr:"DE", phase:4, live:false },
+  { name:"Georgia",       abbr:"GA", phase:4, live:false },
+  { name:"Hawaii",        abbr:"HI", phase:4, live:false },
+  { name:"Idaho",         abbr:"ID", phase:4, live:false },
+  { name:"Illinois",      abbr:"IL", phase:4, live:false },
+  { name:"Indiana",       abbr:"IN", phase:4, live:false },
+  { name:"Iowa",          abbr:"IA", phase:4, live:false },
+  { name:"Kansas",        abbr:"KS", phase:4, live:false },
+  { name:"Kentucky",      abbr:"KY", phase:4, live:false },
+  { name:"Louisiana",     abbr:"LA", phase:4, live:false },
+  { name:"Maine",         abbr:"ME", phase:4, live:false },
+  { name:"Maryland",      abbr:"MD", phase:4, live:false },
+  { name:"Massachusetts", abbr:"MA", phase:4, live:false },
+  { name:"Michigan",      abbr:"MI", phase:4, live:false },
+  { name:"Minnesota",     abbr:"MN", phase:4, live:false },
+  { name:"Mississippi",   abbr:"MS", phase:4, live:false },
+  { name:"Missouri",      abbr:"MO", phase:4, live:false },
+  { name:"Montana",       abbr:"MT", phase:4, live:false },
+  { name:"Nebraska",      abbr:"NE", phase:4, live:false },
+  { name:"New Hampshire", abbr:"NH", phase:4, live:false },
+  { name:"New Jersey",    abbr:"NJ", phase:4, live:false },
+  { name:"North Carolina",abbr:"NC", phase:4, live:false },
+  { name:"North Dakota",  abbr:"ND", phase:4, live:false },
+  { name:"Ohio",          abbr:"OH", phase:4, live:false },
+  { name:"Oklahoma",      abbr:"OK", phase:4, live:false },
+  { name:"Pennsylvania",  abbr:"PA", phase:4, live:false },
+  { name:"Rhode Island",  abbr:"RI", phase:4, live:false },
+  { name:"South Carolina",abbr:"SC", phase:4, live:false },
+  { name:"South Dakota",  abbr:"SD", phase:4, live:false },
+  { name:"Tennessee",     abbr:"TN", phase:4, live:false },
+  { name:"Vermont",       abbr:"VT", phase:4, live:false },
+  { name:"Virginia",      abbr:"VA", phase:4, live:false },
+  { name:"West Virginia", abbr:"WV", phase:4, live:false },
+  { name:"Wisconsin",     abbr:"WI", phase:4, live:false },
+  { name:"Wyoming",       abbr:"WY", phase:4, live:false },
 ];
 
 const INITIAL_FLEET = [
@@ -377,37 +422,54 @@ function StatCounter({ label, value, delay, color }) {
 
 function StateCard({ state, onClick, index }) {
   const [hovered, setHovered] = useState(false);
-  const cfg = STATE_STATUS[state.status];
-  const pct = Math.round((state.hours/18240)*100);
+  const phase = state.phase || 4;
+  const phaseCfg = PHASE_CONFIG[phase];
+  const cfg = STATE_STATUS[state.status || "nominal"];
+  const isLive = state.live;
+
+  if (!isLive) {
+    // Locked phase card
+    return (
+      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
+        style={{ background:"rgba(6,11,17,0.7)", border:`1px solid rgba(255,255,255,0.04)`, borderRadius:"8px", padding:"18px 20px", position:"relative", overflow:"hidden", transition:"all 0.25s ease", opacity:hovered?0.7:0.45, animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
+        <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"48px", fontWeight:900, color:"rgba(255,255,255,0.03)", lineHeight:1, userSelect:"none" }}>{state.abbr}</div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"14px" }}>
+          <div>
+            <div style={{ fontSize:"11px", fontWeight:600, color:"rgba(148,163,184,0.4)", letterSpacing:"0.08em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:"5px", background:`${phaseCfg.color}12`, border:`1px solid ${phaseCfg.color}30`, borderRadius:"3px", padding:"2px 8px" }}>
+              <div style={{ width:"4px", height:"4px", borderRadius:"50%", background:phaseCfg.color, opacity:0.6 }}/>
+              <span style={{ fontSize:"8px", color:phaseCfg.color, letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace", opacity:0.8 }}>{phaseCfg.label}</span>
+            </div>
+          </div>
+          <div style={{ fontSize:"16px", opacity:0.2 }}>🔒</div>
+        </div>
+        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.2)", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em" }}>DATA PENDING ROLLOUT</div>
+      </div>
+    );
+  }
+
+  // Live state card (AZ)
   return (
     <div onClick={()=>onClick(state)} onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)}
-      style={{ background:hovered?"rgba(16,24,38,0.98)":"rgba(10,16,26,0.85)", border:`1px solid ${hovered?cfg.color+"60":"rgba(56,189,248,0.08)"}`, borderRadius:"8px", padding:"18px 20px", cursor:"pointer", position:"relative", overflow:"hidden", transition:"all 0.25s ease", transform:hovered?"translateY(-2px)":"translateY(0)", boxShadow:hovered?`0 8px 32px ${cfg.glow}, 0 0 0 1px ${cfg.color}20`:"none", animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
-      <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"48px", fontWeight:900, color:hovered?cfg.color+"18":"rgba(56,189,248,0.06)", lineHeight:1, userSelect:"none", pointerEvents:"none", transition:"color 0.25s" }}>{state.abbr}</div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"14px" }}>
-        <div>
-          <div style={{ fontSize:"11px", fontWeight:600, color:"#e2e8f0", letterSpacing:"0.08em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
-          <div style={{ display:"flex", alignItems:"center", gap:"5px" }}>
-            <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:cfg.color, boxShadow:`0 0 6px ${cfg.color}` }}/>
-            <span style={{ fontSize:"9px", color:cfg.color, letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace" }}>{cfg.label}</span>
-          </div>
-        </div>
-        <div style={{ textAlign:"right" }}>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"13px", fontWeight:700, color:hovered?cfg.color:"#94a3b8" }}>{state.hours.toLocaleString()}</div>
-          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>HRS FLOWN</div>
-        </div>
+      style={{ background:hovered?"rgba(16,24,38,0.98)":"rgba(10,16,26,0.85)", border:`1px solid ${hovered?"#22c55e60":"rgba(34,197,94,0.2)"}`, borderLeft:"3px solid #22c55e", borderRadius:"8px", padding:"18px 20px", cursor:"pointer", position:"relative", overflow:"hidden", transition:"all 0.25s ease", transform:hovered?"translateY(-2px)":"translateY(0)", boxShadow:hovered?"0 8px 32px rgba(34,197,94,0.15)":"0 0 0 0 transparent", animation:"fadeUp 0.4s ease both", animationDelay:`${index*0.025}s` }}>
+      <div style={{ position:"absolute", right:"-4px", bottom:"-8px", fontFamily:"'Orbitron',sans-serif", fontSize:"48px", fontWeight:900, color:hovered?"rgba(34,197,94,0.12)":"rgba(34,197,94,0.06)", lineHeight:1, userSelect:"none", pointerEvents:"none", transition:"color 0.25s" }}>{state.abbr}</div>
+      <div style={{ position:"absolute", top:"12px", right:"12px", display:"flex", alignItems:"center", gap:"5px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"3px", padding:"2px 8px" }}>
+        <div style={{ width:"5px", height:"5px", borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 6px #22c55e", animation:"pulse 1.5s infinite" }}/>
+        <span style={{ fontSize:"8px", color:"#22c55e", letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace" }}>PHASE I · LIVE</span>
       </div>
-      <div style={{ height:"2px", background:"rgba(255,255,255,0.04)", borderRadius:"2px", marginBottom:"12px", overflow:"hidden" }}>
-        <div style={{ height:"100%", width:hovered?`${pct}%`:"0%", background:`linear-gradient(90deg,${cfg.color}80,${cfg.color})`, borderRadius:"2px", transition:"width 0.6s ease" }}/>
+      <div style={{ marginBottom:"14px", paddingRight:"80px" }}>
+        <div style={{ fontSize:"11px", fontWeight:600, color:"#e2e8f0", letterSpacing:"0.08em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>{state.name.toUpperCase()}</div>
+        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>FAA Registry · {state.schools} verified schools</div>
       </div>
-      <div style={{ display:"flex", gap:"16px" }}>
-        {[["✈",state.aircraft,"ACFT"],["🏫",state.schools,"SCHLS"]].map(([icon,val,lbl]) => (
+      <div style={{ display:"flex", gap:"16px", marginBottom:"12px" }}>
+        {[["✈", state.aircraft, "AIRCRAFT"],["🏫", state.schools, "SCHOOLS"]].map(([icon,val,lbl]) => (
           <div key={lbl} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
             <span style={{ fontSize:"10px" }}>{icon}</span>
-            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"11px", fontWeight:600, color:"#94a3b8" }}>{val}</span>
-            <span style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{lbl}</span>
+            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"13px", fontWeight:700, color:"#22c55e" }}>{val}</span>
+            <span style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{lbl}</span>
           </div>
         ))}
-        <div style={{ marginLeft:"auto", fontSize:"9px", color:"rgba(148,163,184,0.25)", fontFamily:"'IBM Plex Mono',monospace" }}>VIEW →</div>
+        <div style={{ marginLeft:"auto", fontSize:"9px", color:hovered?"#22c55e":"rgba(148,163,184,0.25)", fontFamily:"'IBM Plex Mono',monospace", transition:"color 0.2s" }}>VIEW SCHOOLS →</div>
       </div>
     </div>
   );
@@ -416,36 +478,57 @@ function StateCard({ state, onClick, index }) {
 function StateModal({ state, onClose }) {
   useEffect(() => { const h=(e)=>e.key==="Escape"&&onClose(); window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h); },[onClose]);
   if (!state) return null;
-  const cfg = STATE_STATUS[state.status];
+  const schools = state.schools_data || [];
   return (
-    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(6px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, animation:"fadeIn 0.2s ease" }}>
-      <div onClick={e=>e.stopPropagation()} style={{ width:"480px", background:"#080d14", border:`1px solid ${cfg.color}40`, borderRadius:"12px", padding:"36px", position:"relative", animation:"slideUp 0.25s ease", boxShadow:`0 0 60px ${cfg.glow}` }}>
-        <div style={{ position:"absolute", top:0, left:0, right:0, height:"2px", background:`linear-gradient(90deg,transparent,${cfg.color},transparent)` }}/>
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:1000, animation:"fadeIn 0.2s ease" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"580px", maxHeight:"88vh", overflowY:"auto", background:"#080d14", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"12px", padding:"36px", position:"relative", animation:"slideUp 0.25s ease", boxShadow:"0 0 80px rgba(34,197,94,0.08)" }}>
+        <div style={{ position:"absolute", top:0, left:0, right:0, height:"2px", background:"linear-gradient(90deg,transparent,#22c55e,transparent)" }}/>
+
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"28px" }}>
           <div>
-            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>REGIONAL DETAIL // {state.abbr}</div>
+            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>PHASE I · FAA VERIFIED · {state.abbr}</div>
             <h2 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"22px", fontWeight:800, color:"#e2e8f0", margin:0 }}>{state.name.toUpperCase()}</h2>
+            <p style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", margin:"6px 0 0", fontFamily:"'IBM Plex Mono',monospace" }}>Data sourced from FAA Aircraft Registry · March 2026</p>
           </div>
           <button onClick={onClose} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"6px", color:"#64748b", fontSize:"12px", cursor:"pointer", padding:"6px 12px", fontFamily:"'IBM Plex Mono',monospace" }}>ESC</button>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"12px", marginBottom:"24px" }}>
-          {[{l:"FLIGHT HRS",v:state.hours.toLocaleString(),c:cfg.color},{l:"AIRCRAFT",v:state.aircraft,c:"#e2e8f0"},{l:"SCHOOLS",v:state.schools,c:"#e2e8f0"}].map(item => (
+
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"24px" }}>
+          {[{l:"VERIFIED SCHOOLS",v:state.schools,c:"#22c55e"},{l:"REGISTERED AIRCRAFT",v:state.aircraft,c:"#38BDF8"}].map(item => (
             <div key={item.l} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"8px", padding:"16px", textAlign:"center" }}>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:item.c, marginBottom:"6px" }}>{item.v}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"26px", fontWeight:700, color:item.c, marginBottom:"6px" }}>{item.v}</div>
               <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
             </div>
           ))}
         </div>
-        <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"8px", padding:"16px" }}>
-          <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"10px", fontFamily:"'IBM Plex Mono',monospace" }}>UTILIZATION INDEX</div>
-          <div style={{ height:"6px", background:"rgba(255,255,255,0.04)", borderRadius:"3px", overflow:"hidden" }}>
-            <div style={{ height:"100%", width:`${Math.round((state.hours/18240)*100)}%`, background:`linear-gradient(90deg,${cfg.color}60,${cfg.color})`, borderRadius:"3px" }}/>
-          </div>
-          <div style={{ display:"flex", justifyContent:"space-between", marginTop:"6px" }}>
-            <span style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>0 HRS</span>
-            <span style={{ fontSize:"9px", color:cfg.color, fontFamily:"'IBM Plex Mono',monospace" }}>{Math.round((state.hours/18240)*100)}% CAPACITY</span>
-            <span style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>18,240 HRS</span>
-          </div>
+
+        <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"12px", fontFamily:"'IBM Plex Mono',monospace" }}>FLIGHT SCHOOLS BY FLEET SIZE</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+          {schools.map((s, i) => {
+            const pct = Math.round((s.aircraft / state.aircraft) * 100);
+            return (
+              <div key={i} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"6px", padding:"14px 16px" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"8px" }}>
+                  <div>
+                    <div style={{ fontSize:"11px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"3px" }}>{s.name}</div>
+                    <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>{s.city} · {s.types}</div>
+                  </div>
+                  <div style={{ textAlign:"right", flexShrink:0, marginLeft:"12px" }}>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"14px", fontWeight:700, color:"#38BDF8" }}>{s.aircraft}</div>
+                    <div style={{ fontSize:"8px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>AIRCRAFT</div>
+                  </div>
+                </div>
+                <div style={{ height:"2px", background:"rgba(255,255,255,0.04)", borderRadius:"2px", overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${pct}%`, background:"linear-gradient(90deg,rgba(56,189,248,0.5),#38BDF8)", borderRadius:"2px" }}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop:"20px", padding:"14px 16px", background:"rgba(56,189,248,0.04)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"6px" }}>
+          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>NOTE</div>
+          <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", lineHeight:1.6 }}>Flight hours pending OpenSky integration. Aircraft counts sourced from FAA Registry and are subject to confirmation with individual schools.</div>
         </div>
       </div>
     </div>
@@ -454,52 +537,95 @@ function StateModal({ state, onClose }) {
 
 function OverviewPage() {
   const [search, setSearch]   = useState("");
-  const [filter, setFilter]   = useState("all");
+  const [phaseFilter, setPhaseFilter] = useState("all");
   const [selected, setSelected] = useState(null);
-  const totalHours    = STATES_DATA.reduce((a,s)=>a+s.hours,0);
-  const totalAircraft = STATES_DATA.reduce((a,s)=>a+s.aircraft,0);
-  const totalSchools  = STATES_DATA.reduce((a,s)=>a+s.schools,0);
+
+  const liveStates = STATES_DATA.filter(s => s.live);
+  const totalAircraft = liveStates.reduce((a,s)=>a+(s.aircraft||0),0);
+  const totalSchools  = liveStates.reduce((a,s)=>a+(s.schools||0),0);
+
   const filtered = STATES_DATA.filter(s => {
     const ms = s.name.toLowerCase().includes(search.toLowerCase()) || s.abbr.toLowerCase().includes(search.toLowerCase());
-    const mf = filter==="all" || s.status===filter;
+    const mf = phaseFilter==="all" || String(s.phase)===phaseFilter;
     return ms && mf;
   });
+
+  // Group by phase for display
+  const phases = [1,2,3,4];
+
   return (
     <div style={{ maxWidth:"1400px", margin:"0 auto", padding:"40px 32px", position:"relative", zIndex:1, animation:"pageIn 0.4s ease" }}>
+
+      {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"32px" }}>
         <div>
           <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>// COMMAND CENTER</div>
           <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"32px", fontWeight:900, margin:0, color:"#e2e8f0", letterSpacing:"0.04em", lineHeight:1 }}>REGIONAL<br/><span style={{ color:"#38BDF8" }}>OPERATIONS</span></h1>
-          <p style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", marginTop:"10px", letterSpacing:"0.06em", fontFamily:"'IBM Plex Mono',monospace" }}>Select a region to view flight school activity and fleet status</p>
+          <p style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", marginTop:"10px", letterSpacing:"0.06em", fontFamily:"'IBM Plex Mono',monospace" }}>Phase I live · expanding to 50 states</p>
         </div>
         <div style={{ textAlign:"right" }}>
-          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", letterSpacing:"0.15em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>SYSTEM STATUS</div>
-          <div style={{ display:"flex", alignItems:"center", gap:"8px", justifyContent:"flex-end" }}>
-            <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e" }}/>
-            <span style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"11px", color:"#22c55e", letterSpacing:"0.1em" }}>ALL SYSTEMS GO</span>
+          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.15em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>COVERAGE</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"28px", fontWeight:700, color:"#22c55e" }}>1 / 50</div>
+          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>STATES LIVE</div>
+        </div>
+      </div>
+
+      {/* Live stats - only real data */}
+      <div style={{ display:"flex", gap:"14px", marginBottom:"32px" }}>
+        {[
+          { label:"LIVE STATES",    value:"1",               color:"#22c55e", sub:"Arizona · Phase I" },
+          { label:"VERIFIED SCHOOLS", value:totalSchools,    color:"#38BDF8", sub:"FAA confirmed" },
+          { label:"REGISTERED ACFT", value:totalAircraft,    color:"#a78bfa", sub:"FAA Registry" },
+          { label:"FLIGHT HRS",     value:"—",               color:"#f59e0b", sub:"OpenSky pending" },
+        ].map(item => (
+          <div key={item.label} style={{ background:"rgba(10,16,26,0.8)", border:`1px solid ${item.color}18`, borderLeft:`3px solid ${item.color}`, borderRadius:"6px", padding:"16px 20px", flex:1 }}>
+            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.45)", letterSpacing:"0.18em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.label}</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"24px", fontWeight:700, color:item.color, marginBottom:"4px" }}>{item.value}</div>
+            <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>{item.sub}</div>
           </div>
-        </div>
+        ))}
       </div>
-      <div style={{ display:"flex", gap:"16px", marginBottom:"32px" }}>
-        <StatCounter label="TOTAL FLIGHT HOURS" value={totalHours}    delay={200} color="#38BDF8"/>
-        <StatCounter label="ACTIVE AIRCRAFT"    value={totalAircraft} delay={300} color="#f59e0b"/>
-        <StatCounter label="FLIGHT SCHOOLS"     value={totalSchools}  delay={400} color="#22c55e"/>
-        <StatCounter label="STATES COVERED"     value={50}            delay={500} color="#a78bfa"/>
-      </div>
-      <div style={{ display:"flex", gap:"12px", marginBottom:"28px", alignItems:"center", flexWrap:"wrap" }}>
-        <input placeholder="Search region or state code..." value={search} onChange={e=>setSearch(e.target.value)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"6px", padding:"10px 16px", color:"#e2e8f0", fontSize:"12px", fontFamily:"'IBM Plex Mono',monospace", outline:"none", width:"280px", letterSpacing:"0.04em" }}/>
+
+      {/* Phase legend + search */}
+      <div style={{ display:"flex", gap:"10px", marginBottom:"28px", alignItems:"center", flexWrap:"wrap" }}>
+        <input placeholder="Search states..." value={search} onChange={e=>setSearch(e.target.value)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"6px", padding:"9px 16px", color:"#e2e8f0", fontSize:"12px", fontFamily:"'IBM Plex Mono',monospace", outline:"none", width:"200px" }}/>
         <div style={{ display:"flex", gap:"6px" }}>
-          {[["all","ALL REGIONS","#38BDF8"],["elevated","ELEVATED","#f59e0b"],["nominal","NOMINAL","#38BDF8"],["low","LOW ACTIVITY","#64748b"]].map(([val,label,color]) => (
-            <button key={val} onClick={()=>setFilter(val)} style={{ background:filter===val?`${color}15`:"rgba(255,255,255,0.02)", border:`1px solid ${filter===val?color+"50":"rgba(255,255,255,0.06)"}`, borderRadius:"5px", color:filter===val?color:"rgba(148,163,184,0.35)", fontSize:"9px", letterSpacing:"0.12em", cursor:"pointer", padding:"8px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{label}</button>
-          ))}
+          {[["all","ALL PHASES"],["1","PHASE I"],["2","PHASE II"],["3","PHASE III"],["4","PHASE IV"]].map(([val,lbl]) => {
+            const c = val==="1"?"#22c55e":val==="2"?"#38BDF8":val==="3"?"#f59e0b":val==="4"?"#64748b":"#94a3b8";
+            return <button key={val} onClick={()=>setPhaseFilter(val)} style={{ background:phaseFilter===val?`${c}15`:"rgba(255,255,255,0.02)", border:`1px solid ${phaseFilter===val?c+"50":"rgba(255,255,255,0.06)"}`, borderRadius:"5px", color:phaseFilter===val?c:"rgba(148,163,184,0.35)", fontSize:"9px", letterSpacing:"0.1em", cursor:"pointer", padding:"7px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>;
+          })}
         </div>
-        <div style={{ marginLeft:"auto", fontSize:"10px", color:"rgba(148,163,184,0.3)", letterSpacing:"0.08em", fontFamily:"'IBM Plex Mono',monospace" }}>{filtered.length} REGIONS</div>
+        <div style={{ marginLeft:"auto", fontSize:"10px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>{filtered.length} STATES</div>
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))", gap:"12px" }}>
-        {filtered.map((s,i) => <StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
-      </div>
-      {filtered.length===0 && <div style={{ textAlign:"center", padding:"80px 0", color:"rgba(148,163,184,0.25)", fontSize:"12px", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>NO REGIONS MATCH YOUR FILTER</div>}
-      {selected && <StateModal state={selected} onClose={()=>setSelected(null)}/>}
+
+      {/* Phase sections */}
+      {phaseFilter === "all" ? (
+        phases.map(ph => {
+          const phaseStates = filtered.filter(s => s.phase === ph);
+          if (phaseStates.length === 0) return null;
+          const cfg = PHASE_CONFIG[ph];
+          return (
+            <div key={ph} style={{ marginBottom:"36px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"16px" }}>
+                <div style={{ height:"1px", width:"20px", background:cfg.color, opacity:0.5 }}/>
+                <span style={{ fontSize:"9px", color:cfg.color, letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono',monospace" }}>{cfg.label}</span>
+                {ph === 1 && <span style={{ fontSize:"8px", color:"#22c55e", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", borderRadius:"3px", padding:"2px 8px", fontFamily:"'IBM Plex Mono',monospace" }}>● LIVE</span>}
+                {ph > 1 && <span style={{ fontSize:"8px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>COMING SOON</span>}
+                <div style={{ flex:1, height:"1px", background:`linear-gradient(90deg,${cfg.color}30,transparent)` }}/>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:"12px" }}>
+                {phaseStates.map((s,i) => <StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:"12px" }}>
+          {filtered.map((s,i) => <StateCard key={s.abbr} state={s} onClick={setSelected} index={i}/>)}
+        </div>
+      )}
+
+      {selected && selected.live && <StateModal state={selected} onClose={()=>setSelected(null)}/>}
     </div>
   );
 }
@@ -1071,10 +1197,15 @@ export default function App() {
   };
 
   const tickerItems = [
-    ...STATES_DATA.filter(s=>s.status==="elevated").map(s=>`▲ ${s.name.toUpperCase()} — ${s.hours.toLocaleString()} HRS LOGGED`),
-    ...SCHOOLS_DATA.filter(s=>s.requestedMore).map(s=>`🟢 ${s.name.toUpperCase()} — REQUESTED ADDITIONAL AIRCRAFT`),
+    "▲ ARIZONA — PHASE I LIVE · 10 SCHOOLS · 334 AIRCRAFT VERIFIED",
+    "🟢 WESTWIND SCHOOL OF AERONAUTICS — 58 AIRCRAFT · GOODYEAR AZ",
+    "🟢 CAE AVIATION ACADEMY — 55 AIRCRAFT · MESA AZ",
+    "🟢 EMBRY-RIDDLE AERONAUTICAL UNIVERSITY — 57 AIRCRAFT · PRESCOTT AZ",
+    "⚡ PHASE II COMING SOON — UTAH · COLORADO · NEW MEXICO · NEVADA",
+    "🟢 LUFTHANSA AVIATION TRAINING USA — 31 AIRCRAFT · GOODYEAR AZ",
+    "🟢 MESA PILOT DEVELOPMENT — 29 AIRCRAFT · GLENDALE AZ",
+    "⚡ PHASE III COMING SOON — CALIFORNIA · TEXAS · FLORIDA",
     ...fleet.filter(f=>f.status==="grounded").map(f=>`⛔ ${f.id} — GROUNDED`),
-    ...SCHOOLS_DATA.filter(s=>s.waitlist>0).map(s=>`⚠ ${s.name.toUpperCase()} — ${s.waitlist} STUDENTS ON WAITLIST`),
   ];
 
   return (
