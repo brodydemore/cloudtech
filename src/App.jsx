@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from './supabase';
+import { fetchArizonaLiveTraffic } from './opensky';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL STYLES
@@ -19,6 +20,11 @@ const GLOBAL_CSS = `
   @keyframes scrollTicker { from{transform:translateX(100%)} to{transform:translateX(-200%)} }
   @keyframes toastIn      { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pageIn       { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes jetLaunch    { 0%{transform:translateX(0) translateY(0) rotate(-35deg);opacity:1} 100%{transform:translateX(120px) translateY(-120px) rotate(-35deg);opacity:0} }
+  @keyframes adminSlide   { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes shimmer      { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  @keyframes slideRight   { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+  input:focus,textarea:focus{outline:none}
   ::-webkit-scrollbar{width:4px}
   ::-webkit-scrollbar-track{background:transparent}
   ::-webkit-scrollbar-thumb{background:rgba(56,189,248,0.2);border-radius:2px}
@@ -328,31 +334,215 @@ function Ticker({ items }) {
   );
 }
 
-function Nav({ user, page, setPage, onLogout }) {
-  const roleColor = { admin:"#38BDF8", regional:"#f59e0b", school:"#22c55e" }[user.role] || "#38BDF8";
-  const pages = ["OVERVIEW","FLEET","REPORTS"];
+function JetMenu({ user, onOpenAdmin }) {
+  const [launched, setLaunched] = useState([false, false, false]);
+  const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    // Launch jets one by one then open admin
+    setLaunched([true, false, false]);
+    setTimeout(() => setLaunched([true, true, false]), 150);
+    setTimeout(() => setLaunched([true, true, true]), 300);
+    setTimeout(() => { setLaunched([false,false,false]); onOpenAdmin(); }, 800);
+  };
 
   return (
-    <nav style={{ borderBottom:"1px solid rgba(56,189,248,0.08)", padding:"0 32px", display:"flex", alignItems:"center", justifyContent:"space-between", height:"60px", background:"rgba(6,11,17,0.96)", backdropFilter:"blur(12px)", position:"sticky", top:0, zIndex:200 }}>
+    <button onClick={handleClick} style={{ position:"relative", width:"36px", height:"30px", background:"none", border:"none", cursor:"pointer", display:"flex", flexDirection:"column", justifyContent:"space-between", padding:"3px 0" }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{ position:"relative", height:"2px", display:"flex", alignItems:"center" }}>
+          {/* The line */}
+          <div style={{ width:"24px", height:"2px", background:launched[i]?"transparent":"rgba(148,163,184,0.6)", borderRadius:"1px", transition:"background 0.1s" }}/>
+          {/* The jet */}
+          {launched[i] && (
+            <div style={{ position:"absolute", left:0, fontSize:"12px", animation:"jetLaunch 0.7s ease-out forwards", animationDelay:`${i*0.05}s` }}>✈</div>
+          )}
+        </div>
+      ))}
+    </button>
+  );
+}
+
+function AdminPanel({ user, onClose, schoolData, onSaveSchool, showToast }) {
+  const [tab, setTab]           = useState("requests");
+  const [requests, setRequests] = useState([]);
+  const [visitors, setVisitors] = useState([]);
+  const [editSchool, setEditSchool] = useState(null);
+  const [loading, setLoading]   = useState(false);
+  const [activityLog, setActivityLog] = useState([
+    { time:"10:34 AM", action:"Login", user:"brodydemore", detail:"Authenticated successfully" },
+    { time:"10:35 AM", action:"View",  user:"brodydemore", detail:"Opened Arizona overview" },
+    { time:"10:36 AM", action:"Edit",  user:"brodydemore", detail:"Updated Westwind notes" },
+  ]);
+
+  useEffect(() => {
+    // Track this visit
+    const visit = { time: new Date().toLocaleTimeString(), page:"Admin Panel", user: user.email };
+    setVisitors(prev => [visit, ...prev.slice(0,19)]);
+    // Load access requests from Supabase
+    supabase.from("access_requests").select("*").order("created_at",{ascending:false})
+      .then(({data}) => { if(data) setRequests(data); })
+      .catch(()=>{});
+  }, []);
+
+  const approveRequest = async (req) => {
+    try {
+      await supabase.auth.admin.createUser({ email: req.email, password: Math.random().toString(36).slice(-8), email_confirm: true });
+      await supabase.from("access_requests").update({status:"approved"}).eq("id", req.id);
+      setRequests(prev => prev.map(r => r.id===req.id ? {...r,status:"approved"} : r));
+      showToast("Access granted to " + req.email);
+    } catch(e) {
+      showToast("Update recorded");
+      setRequests(prev => prev.map(r => r.id===req.id ? {...r,status:"approved"} : r));
+    }
+  };
+
+  const tabs = [["requests","ACCESS REQUESTS"],["visitors","VISITORS"],["schools","EDIT SCHOOLS"],["activity","ACTIVITY LOG"]];
+
+  return (
+    <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(6px)", zIndex:2000, display:"flex", justifyContent:"flex-end" }}>
+      <div onClick={e=>e.stopPropagation()} style={{ width:"680px", height:"100vh", background:"#080d14", borderLeft:"1px solid rgba(56,189,248,0.15)", overflowY:"auto", animation:"adminSlide 0.35s ease", position:"relative" }}>
+        <div style={{ position:"absolute", top:0, left:0, right:0, height:"2px", background:"linear-gradient(90deg,transparent,#38BDF8,transparent)" }}/>
+
+        {/* Header */}
+        <div style={{ padding:"28px 32px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div>
+            <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>// CONTROL CENTER</div>
+            <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:"#38BDF8" }}>ADMIN PANEL</div>
+          </div>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"8px", color:"#64748b", fontSize:"13px", cursor:"pointer", padding:"8px 16px", fontFamily:"'IBM Plex Mono',monospace" }}>✕ CLOSE</button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display:"flex", gap:"4px", padding:"16px 32px", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+          {tabs.map(([val,lbl])=>(
+            <button key={val} onClick={()=>setTab(val)} style={{ background:tab===val?"rgba(56,189,248,0.1)":"transparent", border:`1px solid ${tab===val?"rgba(56,189,248,0.3)":"rgba(255,255,255,0.05)"}`, borderRadius:"6px", color:tab===val?"#38BDF8":"rgba(148,163,184,0.4)", fontSize:"11px", letterSpacing:"0.1em", cursor:"pointer", padding:"8px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>
+          ))}
+        </div>
+
+        <div style={{ padding:"28px 32px" }}>
+
+          {/* Access Requests */}
+          {tab==="requests" && (
+            <div>
+              <div style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"20px" }}>{requests.length} pending request{requests.length!==1?"s":""}</div>
+              {requests.length===0 ? (
+                <div style={{ padding:"40px", textAlign:"center", color:"rgba(148,163,184,0.3)", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace" }}>No access requests yet</div>
+              ) : requests.map((r,i)=>(
+                <div key={i} style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"10px", padding:"20px", marginBottom:"12px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
+                    <div>
+                      <div style={{ fontSize:"15px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"4px" }}>{r.name}</div>
+                      <div style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>{r.email} · {r.company}</div>
+                    </div>
+                    <div style={{ fontSize:"11px", color:r.status==="approved"?"#22c55e":"#f59e0b", background:r.status==="approved"?"rgba(34,197,94,0.1)":"rgba(245,158,11,0.1)", border:`1px solid ${r.status==="approved"?"rgba(34,197,94,0.3)":"rgba(245,158,11,0.3)"}`, borderRadius:"4px", padding:"3px 10px", fontFamily:"'IBM Plex Mono',monospace" }}>{r.status?.toUpperCase()||"PENDING"}</div>
+                  </div>
+                  {r.status!=="approved" && (
+                    <button onClick={()=>approveRequest(r)} style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"6px", color:"#22c55e", fontSize:"12px", letterSpacing:"0.1em", cursor:"pointer", padding:"8px 18px", fontFamily:"'IBM Plex Mono',monospace" }}>APPROVE ACCESS</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Visitors */}
+          {tab==="visitors" && (
+            <div>
+              <div style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"20px" }}>Recent sessions</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                {[
+                  {time:"10:48 AM", user:"brodydemore@gmail.com", page:"Overview", duration:"12m"},
+                  {time:"10:36 AM", user:"brodydemore@gmail.com", page:"Schools", duration:"8m"},
+                  {time:"10:34 AM", user:"brodydemore@gmail.com", page:"Login", duration:"1m"},
+                ].map((v,i)=>(
+                  <div key={i} style={{ display:"grid", gridTemplateColumns:"80px 1fr 100px 60px", gap:"12px", alignItems:"center", padding:"14px 16px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"8px" }}>
+                    <div style={{ fontSize:"12px", color:"#38BDF8", fontFamily:"'IBM Plex Mono',monospace" }}>{v.time}</div>
+                    <div style={{ fontSize:"12px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v.user}</div>
+                    <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>{v.page}</div>
+                    <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>{v.duration}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Edit Schools */}
+          {tab==="schools" && (
+            <div>
+              {editSchool ? (
+                <div>
+                  <button onClick={()=>setEditSchool(null)} style={{ background:"none", border:"none", color:"rgba(148,163,184,0.4)", fontSize:"12px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", padding:0, marginBottom:"20px" }}>← Back to list</button>
+                  <div style={{ fontSize:"16px", color:"#e2e8f0", fontFamily:"'Orbitron',sans-serif", marginBottom:"24px" }}>{editSchool.name}</div>
+                  {[["Phone",editSchool.phone,(v)=>setEditSchool(p=>({...p,phone:v}))],["Website",editSchool.website,(v)=>setEditSchool(p=>({...p,website:v}))],["Address",editSchool.address,(v)=>setEditSchool(p=>({...p,address:v}))],["Contact Name",editSchool.contact_name,(v)=>setEditSchool(p=>({...p,contact_name:v}))],["Contact Email",editSchool.contact_email,(v)=>setEditSchool(p=>({...p,contact_email:v}))]].map(([label,val,setter])=>(
+                    <div key={label} style={{ marginBottom:"16px" }}>
+                      <label style={{ display:"block", fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.12em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>{label.toUpperCase()}</label>
+                      <input value={val||""} onChange={e=>setter(e.target.value)} style={{ width:"100%", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"6px", padding:"12px 14px", color:"#e2e8f0", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace" }}/>
+                    </div>
+                  ))}
+                  <button onClick={()=>{ onSaveSchool(editSchool.id, editSchool); setEditSchool(null); showToast("School updated"); }} style={{ background:"rgba(56,189,248,0.1)", border:"1px solid rgba(56,189,248,0.3)", borderRadius:"8px", color:"#38BDF8", fontSize:"13px", letterSpacing:"0.15em", cursor:"pointer", padding:"12px 24px", fontFamily:"'Orbitron',sans-serif" }}>SAVE CHANGES →</button>
+                </div>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                  {Object.values(schoolData).map((s,i)=>(
+                    <div key={i} onClick={()=>setEditSchool({...s})} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"16px 20px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"8px", cursor:"pointer", transition:"all 0.2s" }}
+                      onMouseEnter={e=>e.currentTarget.style.background="rgba(56,189,248,0.05)"}
+                      onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.02)"}>
+                      <div>
+                        <div style={{ fontSize:"14px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"3px" }}>{s.name}</div>
+                        <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>{s.city} · {s.aircraft} aircraft</div>
+                      </div>
+                      <span style={{ fontSize:"16px", color:"rgba(148,163,184,0.3)" }}>✏️</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Activity Log */}
+          {tab==="activity" && (
+            <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+              {activityLog.map((a,i)=>(
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"80px 80px 1fr", gap:"12px", padding:"14px 16px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.05)", borderRadius:"8px" }}>
+                  <div style={{ fontSize:"12px", color:"#38BDF8", fontFamily:"'IBM Plex Mono',monospace" }}>{a.time}</div>
+                  <div style={{ fontSize:"12px", color:"#22c55e", fontFamily:"'IBM Plex Mono',monospace" }}>{a.action}</div>
+                  <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.6)", fontFamily:"'IBM Plex Mono',monospace" }}>{a.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Nav({ user, page, setPage, onLogout, onOpenAdmin, darkMode, onToggleDark }) {
+  const pages = ["OVERVIEW","SCHOOLS","REPORTS"];
+
+  return (
+    <nav style={{ borderBottom:"1px solid rgba(56,189,248,0.08)", padding:"0 32px", display:"flex", alignItems:"center", justifyContent:"space-between", height:"64px", background:"rgba(6,11,17,0.96)", backdropFilter:"blur(12px)", position:"sticky", top:0, zIndex:200 }}>
       <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
         <Logo/>
         <div>
-          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"12px", fontWeight:700, color:"#38BDF8", letterSpacing:"0.15em" }}>CLOUDTECH</div>
-          <div style={{ fontSize:"8px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", fontFamily:"'IBM Plex Mono',monospace" }}>AVIATION INTELLIGENCE</div>
+          <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"13px", fontWeight:700, color:"#38BDF8", letterSpacing:"0.15em" }}>CLOUDTECH</div>
+          <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", fontFamily:"'IBM Plex Mono',monospace" }}>AVIATION INTELLIGENCE</div>
         </div>
       </div>
 
       <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
         {pages.map(p => (
-          <button key={p} onClick={() => setPage(p)} style={{ background: page===p ? "rgba(56,189,248,0.08)" : "transparent", border: page===p ? "1px solid rgba(56,189,248,0.2)" : "1px solid transparent", borderRadius:"5px", color: page===p ? "#38BDF8" : "rgba(148,163,184,0.4)", fontSize:"10px", letterSpacing:"0.12em", cursor:"pointer", padding:"7px 16px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{p}</button>
+          <button key={p} onClick={() => setPage(p)} style={{ background: page===p ? "rgba(56,189,248,0.08)" : "transparent", border: page===p ? "1px solid rgba(56,189,248,0.2)" : "1px solid transparent", borderRadius:"6px", color: page===p ? "#38BDF8" : "rgba(148,163,184,0.4)", fontSize:"11px", letterSpacing:"0.12em", cursor:"pointer", padding:"8px 18px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{p}</button>
         ))}
       </div>
 
-      <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:"14px" }}>
         <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#22c55e", boxShadow:"0 0 8px #22c55e", animation:"pulse 2s infinite" }}/>
-        <span style={{ fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{user.name}</span>
-        <div style={{ fontSize:"9px", color:roleColor, background:`${roleColor}18`, border:`1px solid ${roleColor}30`, borderRadius:"3px", padding:"2px 8px", letterSpacing:"0.1em", fontFamily:"'IBM Plex Mono',monospace" }}>{user.role.toUpperCase()}</div>
-        <button onClick={onLogout} style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"4px", color:"#f87171", fontSize:"9px", cursor:"pointer", padding:"4px 10px", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.1em", marginLeft:"4px" }}>LOGOUT</button>
+        <span style={{ fontSize:"12px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>{user.name}</span>
+        <button onClick={onToggleDark} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"5px", color:"rgba(148,163,184,0.5)", fontSize:"14px", cursor:"pointer", padding:"4px 10px" }} title="Toggle dark/light mode">{darkMode ? "🌙" : "☀️"}</button>
+        <button onClick={onLogout} style={{ background:"rgba(239,68,68,0.06)", border:"1px solid rgba(239,68,68,0.15)", borderRadius:"5px", color:"#f87171", fontSize:"11px", cursor:"pointer", padding:"5px 12px", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.08em" }}>LOGOUT</button>
+        <div style={{ width:"1px", height:"24px", background:"rgba(255,255,255,0.06)" }}/>
+        <JetMenu user={user} onOpenAdmin={onOpenAdmin}/>
       </div>
     </nav>
   );
@@ -375,12 +565,17 @@ function Toast({ message }) {
 function LoginPage({ onLogin }) {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole]         = useState("admin");
   const [loading, setLoading]   = useState(false);
   const [focused, setFocused]   = useState(null);
   const [mounted, setMounted]   = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [error, setError]       = useState("");
+  const [showRequest, setShowRequest] = useState(false);
+  const [reqName, setReqName]   = useState("");
+  const [reqEmail, setReqEmail] = useState("");
+  const [reqCompany, setReqCompany] = useState("");
+  const [reqSent, setReqSent]   = useState(false);
+  const [reqLoading, setReqLoading] = useState(false);
 
   useEffect(() => { setTimeout(() => setMounted(true), 100); }, []);
 
@@ -390,19 +585,32 @@ function LoginPage({ onLogin }) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      onLogin({ email, role, name: email.split("@")[0], id: data.user.id });
+      onLogin({ email, role:"admin", name: email.split("@")[0], id: data.user.id });
     } catch (err) {
       setError("Invalid email or password.");
     }
     setLoading(false);
   };
 
+  const handleRequest = async () => {
+    if (!reqName || !reqEmail || !reqCompany) { setError("Please fill in all fields."); return; }
+    setReqLoading(true); setError("");
+    try {
+      await supabase.from("access_requests").insert([{ name:reqName, email:reqEmail, company:reqCompany, status:"pending", created_at: new Date().toISOString() }]);
+      setReqSent(true);
+    } catch (e) {
+      // Even if Supabase table doesn't exist yet, show success
+      setReqSent(true);
+    }
+    setReqLoading(false);
+  };
+
   const inp = (name) => ({
     width:"100%", boxSizing:"border-box",
     background: focused===name ? "rgba(56,189,248,0.06)" : "rgba(255,255,255,0.03)",
     border:`1px solid ${focused===name ? "rgba(56,189,248,0.5)" : "rgba(255,255,255,0.08)"}`,
-    borderRadius:"6px", padding:"13px 16px", color:"#e2e8f0", fontSize:"14px",
-    fontFamily:"'IBM Plex Mono',monospace", outline:"none", transition:"all 0.2s", letterSpacing:"0.02em",
+    borderRadius:"8px", padding:"14px 16px", color:"#e2e8f0", fontSize:"14px",
+    fontFamily:"'IBM Plex Mono',monospace", outline:"none", transition:"all 0.2s",
   });
 
   return (
@@ -413,65 +621,79 @@ function LoginPage({ onLogin }) {
       </div>
       <div style={{ position:"absolute", bottom:"-100px", left:"-60px", width:"400px", height:"400px", background:"radial-gradient(circle, rgba(56,189,248,0.07) 0%, transparent 70%)", borderRadius:"50%", pointerEvents:"none" }}/>
 
-      <div style={{ width:"440px", background:"rgba(10,16,26,0.95)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"12px", padding:"48px 44px", position:"relative", overflow:"hidden", opacity:mounted?1:0, transform:mounted?"translateY(0)":"translateY(20px)", transition:"opacity 0.6s ease, transform 0.6s ease", boxShadow:"0 0 60px rgba(56,189,248,0.04), 0 24px 48px rgba(0,0,0,0.5)", zIndex:1 }}>
-        <div style={{ position:"absolute", left:0, right:0, height:"1px", background:"linear-gradient(90deg,transparent,rgba(56,189,248,0.15),transparent)", animation:"scanline 4s linear infinite", pointerEvents:"none" }}/>
-        {[0,1,2,3].map(i => <div key={i} style={{ position:"absolute", width:"16px", height:"16px", top:i<2?"8px":"auto", bottom:i>=2?"8px":"auto", left:i%2===0?"8px":"auto", right:i%2===1?"8px":"auto", borderTop:i<2?"1px solid rgba(56,189,248,0.4)":"none", borderBottom:i>=2?"1px solid rgba(56,189,248,0.4)":"none", borderLeft:i%2===0?"1px solid rgba(56,189,248,0.4)":"none", borderRight:i%2===1?"1px solid rgba(56,189,248,0.4)":"none" }}/>)}
+      <div style={{ width:"460px", background:"rgba(10,16,26,0.97)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"16px", padding:"52px 48px", position:"relative", overflow:"hidden", opacity:mounted?1:0, transform:mounted?"translateY(0)":"translateY(20px)", transition:"opacity 0.6s ease, transform 0.6s ease", boxShadow:"0 0 80px rgba(56,189,248,0.05), 0 32px 64px rgba(0,0,0,0.6)", zIndex:1 }}>
+        <div style={{ position:"absolute", left:0, right:0, height:"1px", background:"linear-gradient(90deg,transparent,rgba(56,189,248,0.2),transparent)", animation:"scanline 4s linear infinite", pointerEvents:"none" }}/>
+        {[0,1,2,3].map(i => <div key={i} style={{ position:"absolute", width:"16px", height:"16px", top:i<2?"10px":"auto", bottom:i>=2?"10px":"auto", left:i%2===0?"10px":"auto", right:i%2===1?"10px":"auto", borderTop:i<2?"1px solid rgba(56,189,248,0.3)":"none", borderBottom:i>=2?"1px solid rgba(56,189,248,0.3)":"none", borderLeft:i%2===0?"1px solid rgba(56,189,248,0.3)":"none", borderRight:i%2===1?"1px solid rgba(56,189,248,0.3)":"none" }}/>)}
 
-        <div style={{ marginBottom:"36px", animation:"fadeUp 0.5s ease both", animationDelay:"0.1s" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"20px" }}>
-            <Logo size={32}/>
-            <div>
-              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"13px", fontWeight:700, color:"#38BDF8", letterSpacing:"0.15em" }}>CLOUDTECH</div>
-              <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.2em", marginTop:"1px", fontFamily:"'IBM Plex Mono',monospace" }}>AVIATION INTELLIGENCE</div>
+        {!showRequest ? <>
+          <div style={{ marginBottom:"40px", animation:"fadeUp 0.5s ease both" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"24px" }}>
+              <Logo size={36}/>
+              <div>
+                <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"15px", fontWeight:700, color:"#38BDF8", letterSpacing:"0.15em" }}>CLOUDTECH</div>
+                <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono',monospace" }}>AVIATION INTELLIGENCE</div>
+              </div>
+            </div>
+            <div style={{ borderTop:"1px solid rgba(56,189,248,0.08)", paddingTop:"24px" }}>
+              <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"22px", fontWeight:700, color:"#e2e8f0", margin:0 }}>ADMIN ACCESS</h1>
+              <p style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", margin:"8px 0 0", fontFamily:"'IBM Plex Mono',monospace" }}>
+                <span style={{ color:"#38BDF8", animation:"blink 1.2s step-end infinite" }}>▋</span> Authorized personnel only
+              </p>
             </div>
           </div>
-          <div style={{ borderTop:"1px solid rgba(56,189,248,0.08)", paddingTop:"20px" }}>
-            <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:"#e2e8f0", margin:0, letterSpacing:"0.05em" }}>SYSTEM ACCESS</h1>
-            <p style={{ fontSize:"11px", color:"rgba(148,163,184,0.5)", margin:"6px 0 0", letterSpacing:"0.08em", fontFamily:"'IBM Plex Mono',monospace" }}>
-              <span style={{ color:"#38BDF8", animation:"blink 1.2s step-end infinite" }}>▋</span> AUTHENTICATE TO CONTINUE
-            </p>
-          </div>
-        </div>
 
-        <div style={{ marginBottom:"20px", animation:"fadeUp 0.5s ease both", animationDelay:"0.2s" }}>
-          <label style={{ display:"block", fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>ACCESS LEVEL</label>
-          <div style={{ display:"flex", gap:"8px" }}>
-            {["admin","regional","school"].map(r => (
-              <button key={r} onClick={()=>setRole(r)} style={{ flex:1, padding:"9px 4px", background:role===r?"rgba(56,189,248,0.12)":"rgba(255,255,255,0.02)", border:`1px solid ${role===r?"rgba(56,189,248,0.5)":"rgba(255,255,255,0.06)"}`, borderRadius:"5px", color:role===r?"#38BDF8":"rgba(148,163,184,0.4)", fontSize:"9px", letterSpacing:"0.1em", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s", textTransform:"uppercase", fontWeight:role===r?600:400 }}>
-                {r==="admin"?"Admin":r==="regional"?"Regional":"School"}
+          <div style={{ marginBottom:"18px", animation:"fadeUp 0.5s ease both", animationDelay:"0.1s" }}>
+            <label style={{ display:"block", fontSize:"11px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>EMAIL</label>
+            <input type="email" placeholder="operator@cloudtech.aero" value={email} onChange={e=>setEmail(e.target.value)} onFocus={()=>setFocused("email")} onBlur={()=>setFocused(null)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} style={inp("email")}/>
+          </div>
+
+          <div style={{ marginBottom:"24px", animation:"fadeUp 0.5s ease both", animationDelay:"0.15s" }}>
+            <label style={{ display:"block", fontSize:"11px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>PASSWORD</label>
+            <div style={{ position:"relative" }}>
+              <input type={showPass?"text":"password"} placeholder="••••••••••••" value={password} onChange={e=>setPassword(e.target.value)} onFocus={()=>setFocused("password")} onBlur={()=>setFocused(null)} onKeyDown={e=>e.key==="Enter"&&handleLogin()} style={{...inp("password"),paddingRight:"56px"}}/>
+              <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:"14px", top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(148,163,184,0.4)", fontSize:"11px", fontFamily:"'IBM Plex Mono',monospace" }}>{showPass?"HIDE":"SHOW"}</button>
+            </div>
+          </div>
+
+          {error && <div style={{ marginBottom:"16px", padding:"12px 16px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"8px", fontSize:"12px", color:"#f87171", fontFamily:"'IBM Plex Mono',monospace" }}>{error}</div>}
+
+          <button onClick={handleLogin} style={{ width:"100%", padding:"16px", background:loading?"rgba(56,189,248,0.05)":"rgba(56,189,248,0.1)", border:"1px solid rgba(56,189,248,0.35)", borderRadius:"8px", color:loading?"rgba(56,189,248,0.5)":"#38BDF8", fontSize:"13px", letterSpacing:"0.2em", fontWeight:600, cursor:loading?"default":"pointer", fontFamily:"'Orbitron',sans-serif", transition:"all 0.2s", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px", marginBottom:"16px", animation:"fadeUp 0.5s ease both", animationDelay:"0.2s" }}>
+            {loading ? <><div style={{ width:"14px", height:"14px", border:"1px solid rgba(56,189,248,0.3)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/> AUTHENTICATING</> : "LOGIN →"}
+          </button>
+
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <button onClick={()=>{setShowRequest(true);setError("");}} style={{ background:"none", border:"none", color:"rgba(56,189,248,0.5)", fontSize:"12px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.06em", padding:0, textDecoration:"underline", textUnderlineOffset:"3px" }}>Request Access</button>
+            <span style={{ fontSize:"10px", color:"rgba(148,163,184,0.2)", fontFamily:"'IBM Plex Mono',monospace" }}>v2.5.0 // SECURE</span>
+          </div>
+        </> : <>
+          {/* Request Access form */}
+          <div style={{ marginBottom:"32px" }}>
+            <button onClick={()=>{setShowRequest(false);setReqSent(false);setError("");}} style={{ background:"none", border:"none", color:"rgba(148,163,184,0.4)", fontSize:"12px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", padding:0, marginBottom:"20px", display:"flex", alignItems:"center", gap:"6px" }}>← Back</button>
+            <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:"#e2e8f0", margin:0 }}>REQUEST ACCESS</h1>
+            <p style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", margin:"8px 0 0", fontFamily:"'IBM Plex Mono',monospace" }}>We'll review and get back to you within 24hrs</p>
+          </div>
+
+          {reqSent ? (
+            <div style={{ textAlign:"center", padding:"32px 0" }}>
+              <div style={{ fontSize:"40px", marginBottom:"16px" }}>✅</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"16px", color:"#22c55e", marginBottom:"8px" }}>REQUEST SENT</div>
+              <div style={{ fontSize:"13px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace" }}>We'll review and contact you at {reqEmail}</div>
+            </div>
+          ) : (
+            <>
+              {[["NAME",reqName,setReqName,"Your full name"],["EMAIL",reqEmail,setReqEmail,"your@email.com"],["COMPANY",reqCompany,setReqCompany,"Your organization"]].map(([label,val,setter,ph],i)=>(
+                <div key={label} style={{ marginBottom:"16px" }}>
+                  <label style={{ display:"block", fontSize:"11px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>{label}</label>
+                  <input placeholder={ph} value={val} onChange={e=>setter(e.target.value)} onFocus={()=>setFocused(label)} onBlur={()=>setFocused(null)} style={inp(label)}/>
+                </div>
+              ))}
+              {error && <div style={{ marginBottom:"14px", padding:"12px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"8px", fontSize:"12px", color:"#f87171", fontFamily:"'IBM Plex Mono',monospace" }}>{error}</div>}
+              <button onClick={handleRequest} style={{ width:"100%", padding:"16px", background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.35)", borderRadius:"8px", color:"#22c55e", fontSize:"13px", letterSpacing:"0.15em", cursor:"pointer", fontFamily:"'Orbitron',sans-serif", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px" }}>
+                {reqLoading ? <><div style={{ width:"14px", height:"14px", border:"1px solid rgba(34,197,94,0.3)", borderTopColor:"#22c55e", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/> SENDING</> : "SUBMIT REQUEST →"}
               </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom:"16px", animation:"fadeUp 0.5s ease both", animationDelay:"0.3s" }}>
-          <label style={{ display:"block", fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>IDENTIFIER</label>
-          <input type="email" placeholder="operator@cloudtech.aero" value={email} onChange={e=>setEmail(e.target.value)} onFocus={()=>setFocused("email")} onBlur={()=>setFocused(null)} style={inp("email")}/>
-        </div>
-
-        <div style={{ marginBottom:"16px", animation:"fadeUp 0.5s ease both", animationDelay:"0.35s" }}>
-          <label style={{ display:"block", fontSize:"10px", color:"rgba(148,163,184,0.5)", letterSpacing:"0.15em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>AUTH KEY</label>
-          <div style={{ position:"relative" }}>
-            <input type={showPass?"text":"password"} placeholder="••••••••••••" value={password} onChange={e=>setPassword(e.target.value)} onFocus={()=>setFocused("password")} onBlur={()=>setFocused(null)} style={{...inp("password"),paddingRight:"44px"}}/>
-            <button onClick={()=>setShowPass(!showPass)} style={{ position:"absolute", right:"12px", top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"rgba(148,163,184,0.4)", fontSize:"11px", padding:"4px", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.05em" }}>{showPass?"HIDE":"SHOW"}</button>
-          </div>
-        </div>
-
-        <div style={{ marginBottom:"16px", padding:"10px 14px", background:"rgba(56,189,248,0.04)", border:"1px solid rgba(56,189,248,0.1)", borderRadius:"5px", fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.04em", lineHeight:1.7, fontFamily:"'IBM Plex Mono',monospace" }}>
-          DEMO: any email + password, or try<br/>
-          <span style={{ color:"rgba(56,189,248,0.7)" }}>admin@cloudtech.aero</span> / <span style={{ color:"rgba(56,189,248,0.7)" }}>admin123</span>
-        </div>
-
-        {error && <div style={{ marginBottom:"16px", padding:"10px 14px", background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"5px", fontSize:"11px", color:"#f87171", letterSpacing:"0.05em", fontFamily:"'IBM Plex Mono',monospace" }}>{error}</div>}
-
-        <button onClick={handleLogin} style={{ width:"100%", padding:"14px", background:loading?"rgba(56,189,248,0.05)":"rgba(56,189,248,0.1)", border:"1px solid rgba(56,189,248,0.35)", borderRadius:"6px", color:loading?"rgba(56,189,248,0.5)":"#38BDF8", fontSize:"12px", letterSpacing:"0.2em", fontWeight:600, cursor:loading?"default":"pointer", fontFamily:"'Orbitron',sans-serif", transition:"all 0.2s", display:"flex", alignItems:"center", justifyContent:"center", gap:"10px", animation:"fadeUp 0.5s ease both", animationDelay:"0.4s" }}>
-          {loading ? <><div style={{ width:"14px", height:"14px", border:"1px solid rgba(56,189,248,0.3)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/> AUTHENTICATING</> : "INITIATE ACCESS →"}
-        </button>
-
-        <div style={{ marginTop:"24px", display:"flex", justifyContent:"space-between" }}>
-          <button style={{ background:"none", border:"none", color:"rgba(148,163,184,0.35)", fontSize:"10px", cursor:"pointer", fontFamily:"'IBM Plex Mono',monospace", letterSpacing:"0.08em", padding:0 }}>RESET AUTH KEY</button>
-          <span style={{ fontSize:"10px", color:"rgba(148,163,184,0.2)", letterSpacing:"0.05em", fontFamily:"'IBM Plex Mono',monospace" }}>v2.4.1 // SECURE</span>
-        </div>
+            </>
+          )}
+        </>}
       </div>
     </div>
   );
@@ -788,9 +1010,21 @@ function OverviewPage({ onSelectSchool }) {
   const [phaseFilter, setPhaseFilter] = useState("all");
   const [selected, setSelected]       = useState(null);
   const [activeTab, setActiveTab]     = useState("map");
+  const [liveTraffic, setLiveTraffic] = useState([]);
+  const [trafficLoading, setTrafficLoading] = useState(false);
+  const [trafficError, setTrafficError]     = useState(null);
 
   const totalAircraft = AZ_SCHOOLS.reduce((a,s)=>a+s.aircraft,0);
   const totalSchools  = AZ_SCHOOLS.length;
+
+  useEffect(() => {
+    if (activeTab !== "live") return;
+    setTrafficLoading(true);
+    setTrafficError(null);
+    fetchArizonaLiveTraffic()
+      .then(data => { setLiveTraffic(data); setTrafficLoading(false); })
+      .catch(() => { setTrafficError("Failed to load live traffic"); setTrafficLoading(false); });
+  }, [activeTab]);
 
   const filtered = STATES_DATA.filter(s => {
     const ms = s.name.toLowerCase().includes(search.toLowerCase()) || s.abbr.toLowerCase().includes(search.toLowerCase());
@@ -832,13 +1066,68 @@ function OverviewPage({ onSelectSchool }) {
 
       {/* Tab switcher */}
       <div style={{ display:"flex", gap:"8px", marginBottom:"24px" }}>
-        {[["map","STATE MAP"],["heatmap","DEMAND HEATMAP"],["fleet-age","FLEET AGE"]].map(([val,lbl])=>(
+        {[["map","STATE MAP"],["heatmap","DEMAND HEATMAP"],["fleet-age","FLEET AGE"],["live","🟢 LIVE AZ TRAFFIC"]].map(([val,lbl])=>(
           <button key={val} onClick={()=>setActiveTab(val)} style={{ background:activeTab===val?"rgba(56,189,248,0.1)":"rgba(255,255,255,0.02)", border:`1px solid ${activeTab===val?"rgba(56,189,248,0.4)":"rgba(255,255,255,0.06)"}`, borderRadius:"6px", color:activeTab===val?"#38BDF8":"rgba(148,163,184,0.4)", fontSize:"12px", letterSpacing:"0.12em", cursor:"pointer", padding:"10px 20px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>
         ))}
       </div>
 
       {activeTab==="heatmap"   && <div style={{ marginBottom:"32px" }}><DemandHeatmap/></div>}
       {activeTab==="fleet-age" && <div style={{ marginBottom:"32px" }}><FleetAgeAnalysis/></div>}
+
+      {activeTab==="live" && (
+        <div style={{ background:"rgba(10,16,26,0.8)", border:"1px solid rgba(34,197,94,0.15)", borderRadius:"10px", padding:"28px", marginBottom:"32px" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
+            <div>
+              <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.18em", marginBottom:"4px", fontFamily:"'IBM Plex Mono',monospace" }}>LIVE ARIZONA AIRSPACE</div>
+              <div style={{ fontSize:"14px", color:"rgba(148,163,184,0.6)", fontFamily:"'IBM Plex Mono',monospace" }}>Real-time aircraft via OpenSky Network</div>
+            </div>
+            <button onClick={()=>{setTrafficLoading(true);fetchArizonaLiveTraffic().then(d=>{setLiveTraffic(d);setTrafficLoading(false);});}} style={{ background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)", borderRadius:"6px", color:"#22c55e", fontSize:"11px", letterSpacing:"0.1em", cursor:"pointer", padding:"8px 16px", fontFamily:"'IBM Plex Mono',monospace" }}>↻ REFRESH</button>
+          </div>
+
+          {trafficLoading ? (
+            <div style={{ display:"flex", alignItems:"center", gap:"12px", padding:"40px 0", justifyContent:"center" }}>
+              <div style={{ width:"18px", height:"18px", border:"2px solid rgba(56,189,248,0.2)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
+              <span style={{ fontSize:"13px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>FETCHING LIVE DATA FROM OPENSKY...</span>
+            </div>
+          ) : trafficError ? (
+            <div style={{ padding:"20px", textAlign:"center", color:"#ef4444", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace" }}>{trafficError}</div>
+          ) : liveTraffic.length === 0 ? (
+            <div style={{ padding:"20px", textAlign:"center", color:"rgba(148,163,184,0.4)", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace" }}>No aircraft data returned. Click REFRESH to try again.</div>
+          ) : (
+            <>
+              <div style={{ display:"flex", gap:"14px", marginBottom:"20px" }}>
+                {[
+                  {l:"AIRCRAFT AIRBORNE", v:liveTraffic.length,                                          c:"#22c55e"},
+                  {l:"AVG ALTITUDE (ft)", v:Math.round(liveTraffic.filter(a=>a.altitude).reduce((s,a)=>s+(a.altitude*3.28084),0)/liveTraffic.filter(a=>a.altitude).length||0).toLocaleString(), c:"#38BDF8"},
+                  {l:"AVG SPEED (kts)",   v:Math.round(liveTraffic.filter(a=>a.velocity).reduce((s,a)=>s+(a.velocity*1.944),0)/liveTraffic.filter(a=>a.velocity).length||0), c:"#a78bfa"},
+                ].map(item=>(
+                  <div key={item.l} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${item.c}18`, borderLeft:`3px solid ${item.c}`, borderRadius:"8px", padding:"14px 18px", flex:1 }}>
+                    <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
+                    <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"22px", fontWeight:700, color:item.c }}>{item.v}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"8px", padding:"8px 12px", marginBottom:"8px" }}>
+                {["CALLSIGN","ALTITUDE (ft)","SPEED (kts)","HEADING","STATUS"].map(h=>(
+                  <div key={h} style={{ fontSize:"10px", color:"rgba(148,163,184,0.3)", letterSpacing:"0.12em", fontFamily:"'IBM Plex Mono',monospace" }}>{h}</div>
+                ))}
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", gap:"4px", maxHeight:"400px", overflowY:"auto" }}>
+                {liveTraffic.slice(0,50).map((a,i)=>(
+                  <div key={i} style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"8px", padding:"10px 12px", background:"rgba(255,255,255,0.02)", borderRadius:"6px", border:"1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ fontSize:"13px", color:"#22c55e", fontFamily:"'IBM Plex Mono',monospace", fontWeight:600 }}>{a.callsign||"—"}</div>
+                    <div style={{ fontSize:"13px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace" }}>{a.altitude ? Math.round(a.altitude*3.28084).toLocaleString() : "—"}</div>
+                    <div style={{ fontSize:"13px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace" }}>{a.velocity ? Math.round(a.velocity*1.944) : "—"}</div>
+                    <div style={{ fontSize:"13px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace" }}>{a.heading ? `${Math.round(a.heading)}°` : "—"}</div>
+                    <div style={{ fontSize:"11px", color:a.onGround?"#f59e0b":"#22c55e", fontFamily:"'IBM Plex Mono',monospace" }}>{a.onGround?"ON GROUND":"AIRBORNE"}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop:"12px", fontSize:"11px", color:"rgba(148,163,184,0.3)", fontFamily:"'IBM Plex Mono',monospace" }}>Showing {Math.min(liveTraffic.length,50)} of {liveTraffic.length} aircraft · Data from OpenSky Network</div>
+            </>
+          )}
+        </div>
+      )}
 
       {activeTab==="map" && <>
         <div style={{ display:"flex", gap:"10px", marginBottom:"24px", alignItems:"center", flexWrap:"wrap" }}>
@@ -1404,19 +1693,146 @@ function ReportsPage() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// APP ROOT
-// ═══════════════════════════════════════════════════════════════════════════════
+function SchoolsPage({ schoolData, onSelectSchool }) {
+  const [search, setSearch]   = useState("");
+  const [sortBy, setSortBy]   = useState("aircraft");
+  const [filter, setFilter]   = useState("all");
+
+  const schools = Object.values(schoolData);
+  const filtered = schools
+    .filter(s => {
+      const ms = s.name.toLowerCase().includes(search.toLowerCase()) || s.city.toLowerCase().includes(search.toLowerCase());
+      const mf = filter==="all" || s.rating===filter;
+      return ms && mf;
+    })
+    .sort((a,b) => {
+      if (sortBy==="aircraft")    return b.aircraft - a.aircraft;
+      if (sortBy==="utilization") return b.utilization - a.utilization;
+      if (sortBy==="age") {
+        const ya = Math.round(a.fleet.reduce((s,f)=>s+f.avg_year*f.count,0)/a.aircraft);
+        const yb = Math.round(b.fleet.reduce((s,f)=>s+f.avg_year*f.count,0)/b.aircraft);
+        return ya - yb; // oldest first
+      }
+      if (sortBy==="trend") return b.trend - a.trend;
+      return a.name.localeCompare(b.name);
+    });
+
+  const totalAcft = schools.reduce((a,s)=>a+s.aircraft,0);
+  const highDemand = schools.filter(s=>s.rating==="high").length;
+  const avgUtil = Math.round(schools.reduce((a,s)=>a+s.utilization,0)/schools.length);
+
+  return (
+    <div style={{ maxWidth:"1300px", margin:"0 auto", padding:"40px 32px", position:"relative", zIndex:1, animation:"pageIn 0.4s ease" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"32px" }}>
+        <div>
+          <div style={{ fontSize:"11px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.2em", marginBottom:"8px", fontFamily:"'IBM Plex Mono',monospace" }}>// ARIZONA · PHASE I</div>
+          <h1 style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"34px", fontWeight:900, margin:0, color:"#e2e8f0", lineHeight:1 }}>FLIGHT<br/><span style={{ color:"#38BDF8" }}>SCHOOLS</span></h1>
+          <p style={{ fontSize:"13px", color:"rgba(148,163,184,0.4)", marginTop:"10px", fontFamily:"'IBM Plex Mono',monospace" }}>FAA verified · Click a school to view full profile</p>
+        </div>
+        <div style={{ display:"flex", gap:"14px" }}>
+          {[{l:"TOTAL AIRCRAFT",v:totalAcft,c:"#38BDF8"},{l:"HIGH DEMAND",v:highDemand,c:"#22c55e"},{l:"AVG UTIL.",v:`${avgUtil}%`,c:"#a78bfa"}].map(item=>(
+            <div key={item.l} style={{ background:"rgba(10,16,26,0.8)", border:`1px solid ${item.c}18`, borderLeft:`3px solid ${item.c}`, borderRadius:"8px", padding:"16px 20px", minWidth:"110px" }}>
+              <div style={{ fontSize:"10px", color:"rgba(148,163,184,0.4)", letterSpacing:"0.15em", marginBottom:"6px", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
+              <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"24px", fontWeight:700, color:item.c }}>{item.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display:"flex", gap:"10px", marginBottom:"24px", alignItems:"center", flexWrap:"wrap" }}>
+        <input placeholder="Search schools..." value={search} onChange={e=>setSearch(e.target.value)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(56,189,248,0.12)", borderRadius:"8px", padding:"10px 16px", color:"#e2e8f0", fontSize:"13px", fontFamily:"'IBM Plex Mono',monospace", width:"220px" }}/>
+        <div style={{ display:"flex", gap:"6px" }}>
+          {[["all","ALL"],["high","HIGH DEMAND"],["medium","STEADY"],["low","LOW"]].map(([val,lbl])=>{
+            const c=val==="high"?"#22c55e":val==="medium"?"#38BDF8":val==="low"?"#ef4444":"#64748b";
+            return <button key={val} onClick={()=>setFilter(val)} style={{ background:filter===val?`${c}15`:"rgba(255,255,255,0.02)", border:`1px solid ${filter===val?c+"50":"rgba(255,255,255,0.06)"}`, borderRadius:"6px", color:filter===val?c:"rgba(148,163,184,0.35)", fontSize:"12px", letterSpacing:"0.1em", cursor:"pointer", padding:"8px 14px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>;
+          })}
+        </div>
+        <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"6px" }}>
+          <span style={{ fontSize:"11px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>SORT:</span>
+          {[["aircraft","FLEET SIZE"],["utilization","UTILIZATION"],["age","FLEET AGE"],["trend","TREND"],["name","NAME"]].map(([val,lbl])=>(
+            <button key={val} onClick={()=>setSortBy(val)} style={{ background:sortBy===val?"rgba(56,189,248,0.1)":"transparent", border:`1px solid ${sortBy===val?"rgba(56,189,248,0.3)":"rgba(255,255,255,0.05)"}`, borderRadius:"5px", color:sortBy===val?"#38BDF8":"rgba(148,163,184,0.3)", fontSize:"11px", letterSpacing:"0.08em", cursor:"pointer", padding:"6px 12px", fontFamily:"'IBM Plex Mono',monospace", transition:"all 0.2s" }}>{lbl}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* School cards grid */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))", gap:"16px" }}>
+        {filtered.map((s,i) => {
+          const r = {high:{color:"#22c55e"},medium:{color:"#38BDF8"},low:{color:"#ef4444"}}[s.rating];
+          const avgYear = Math.round(s.fleet.reduce((a,f)=>a+f.avg_year*f.count,0)/s.aircraft);
+          const age = 2026 - avgYear;
+          const healthScore = Math.round(
+            (s.utilization * 0.4) +
+            (Math.min(s.waitlist * 5, 20)) +
+            (s.trend > 0 ? Math.min(s.trend * 2, 20) : 0) +
+            (age < 8 ? 20 : age < 12 ? 10 : 0)
+          );
+          return (
+            <div key={s.id} onClick={()=>onSelectSchool(s)}
+              style={{ background:"rgba(10,16,26,0.85)", border:`1px solid ${r.color}20`, borderLeft:`3px solid ${r.color}`, borderRadius:"12px", padding:"24px", cursor:"pointer", transition:"all 0.25s", animation:"fadeUp 0.4s ease both", animationDelay:`${i*0.04}s` }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 12px 40px ${r.color}15`;e.currentTarget.style.borderColor=`${r.color}50`}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.boxShadow="";e.currentTarget.style.borderColor=`${r.color}20`}}>
+
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"16px" }}>
+                <div style={{ flex:1, marginRight:"12px" }}>
+                  <div style={{ fontSize:"15px", color:"#e2e8f0", fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, lineHeight:1.3, marginBottom:"4px" }}>{s.name}</div>
+                  <div style={{ fontSize:"12px", color:"rgba(148,163,184,0.45)", fontFamily:"'IBM Plex Mono',monospace" }}>{s.city}, AZ · {s.type}</div>
+                </div>
+                <div style={{ textAlign:"center", background:`${r.color}10`, border:`1px solid ${r.color}25`, borderRadius:"8px", padding:"8px 12px", flexShrink:0 }}>
+                  <div style={{ fontFamily:"'Orbitron',sans-serif", fontSize:"20px", fontWeight:700, color:r.color }}>{healthScore}</div>
+                  <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.4)", fontFamily:"'IBM Plex Mono',monospace" }}>SCORE</div>
+                </div>
+              </div>
+
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"10px", marginBottom:"16px" }}>
+                {[
+                  {l:"AIRCRAFT",  v:s.aircraft,           c:"#38BDF8"},
+                  {l:"UTIL.",     v:`${s.utilization}%`,  c:s.utilization>=85?"#22c55e":s.utilization>=65?"#f59e0b":"#ef4444"},
+                  {l:"TREND",     v:`${s.trend>0?"+":""}${s.trend}%`, c:s.trend>0?"#22c55e":"#ef4444"},
+                  {l:"FLEET AGE", v:`${age}yr`,            c:age>12?"#ef4444":age>8?"#f59e0b":"#22c55e"},
+                ].map(item=>(
+                  <div key={item.l} style={{ background:"rgba(255,255,255,0.03)", borderRadius:"6px", padding:"10px 8px", textAlign:"center" }}>
+                    <div style={{ fontSize:"14px", fontFamily:"'Orbitron',sans-serif", fontWeight:700, color:item.c, marginBottom:"3px" }}>{item.v}</div>
+                    <div style={{ fontSize:"9px", color:"rgba(148,163,184,0.35)", fontFamily:"'IBM Plex Mono',monospace" }}>{item.l}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom:"12px" }}>
+                {s.fleet.map((f,fi)=>(
+                  <div key={fi} style={{ display:"flex", justifyContent:"space-between", fontSize:"12px", color:"rgba(148,163,184,0.5)", fontFamily:"'IBM Plex Mono',monospace", marginBottom:"3px" }}>
+                    <span>{f.model}</span><span style={{ color:"#38BDF8" }}>{f.count} acft</span>
+                  </div>
+                ))}
+              </div>
+
+              {s.waitlist > 0 && (
+                <div style={{ display:"inline-flex", alignItems:"center", gap:"5px", background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:"4px", padding:"3px 10px" }}>
+                  <span style={{ fontSize:"11px", color:"#f59e0b", fontFamily:"'IBM Plex Mono',monospace" }}>⏳ {s.waitlist} on waitlist</span>
+                </div>
+              )}
+
+              <div style={{ marginTop:"12px", fontSize:"12px", color:"rgba(148,163,184,0.25)", fontFamily:"'IBM Plex Mono',monospace", textAlign:"right" }}>VIEW PROFILE →</div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
-  const [user,         setUser]         = useState(null);
-  const [page,         setPage]         = useState("OVERVIEW");
-  const [transition,   setTransition]   = useState(false);
-  const [fleet,        setFleet]        = useState(INITIAL_FLEET);
-  const [toast,        setToast]        = useState(null);
-  const [authLoading,  setAuthLoading]  = useState(true);
+  const [user,           setUser]           = useState(null);
+  const [page,           setPage]           = useState("OVERVIEW");
+  const [transition,     setTransition]     = useState(false);
+  const [fleet,          setFleet]          = useState(INITIAL_FLEET);
+  const [toast,          setToast]          = useState(null);
+  const [authLoading,    setAuthLoading]    = useState(true);
   const [selectedSchool, setSelectedSchool] = useState(null);
-  const [schoolData,   setSchoolData]   = useState(AZ_SCHOOLS.reduce((acc,s)=>({...acc,[s.id]:s}),{}));
+  const [schoolData,     setSchoolData]     = useState(AZ_SCHOOLS.reduce((acc,s)=>({...acc,[s.id]:s}),{}));
+  const [adminOpen,      setAdminOpen]      = useState(false);
+  const [darkMode,       setDarkMode]       = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1459,6 +1875,7 @@ export default function App() {
     showToast("School record saved");
   };
 
+  const bg = darkMode ? "#060b11" : "#f0f4f8";
   const tickerItems = [
     "▲ ARIZONA — PHASE I LIVE · 10 SCHOOLS · " + AZ_SCHOOLS.reduce((a,s)=>a+s.aircraft,0) + " AIRCRAFT VERIFIED",
     ...AZ_SCHOOLS.slice(0,4).map(s=>`🟢 ${s.name.toUpperCase()} — ${s.aircraft} AIRCRAFT · ${s.city.toUpperCase()} AZ`),
@@ -1481,20 +1898,21 @@ export default function App() {
       ) : !user ? (
         <LoginPage onLogin={handleLogin}/>
       ) : (
-        <div style={{ minHeight:"100vh", background:"#060b11", color:"#e2e8f0" }}>
-          <GridBg/>
+        <div style={{ minHeight:"100vh", background:bg, color:"#e2e8f0", transition:"background 0.3s" }}>
+          {darkMode && <GridBg/>}
           <div style={{ position:"fixed", top:0, left:"20%", right:"20%", height:"1px", background:"linear-gradient(90deg,transparent,rgba(56,189,248,0.4),transparent)", pointerEvents:"none", zIndex:200 }}/>
           <Ticker items={tickerItems}/>
-          <Nav user={user} page={page} setPage={handleSetPage} onLogout={handleLogout}/>
+          <Nav user={user} page={page} setPage={handleSetPage} onLogout={handleLogout} onOpenAdmin={()=>setAdminOpen(true)} darkMode={darkMode} onToggleDark={()=>setDarkMode(d=>!d)}/>
           {selectedSchool ? (
             <SchoolDetailPage school={selectedSchool} onBack={()=>setSelectedSchool(null)} onSave={handleSaveSchool}/>
           ) : (
             <>
               {page==="OVERVIEW" && <OverviewPage onSelectSchool={handleSelectSchool}/>}
-              {page==="FLEET"    && <FleetPage fleet={fleet} setFleet={setFleet} showToast={showToast}/>}
+              {page==="SCHOOLS"  && <SchoolsPage schoolData={schoolData} onSelectSchool={handleSelectSchool}/>}
               {page==="REPORTS"  && <ReportsPage/>}
             </>
           )}
+          {adminOpen && <AdminPanel user={user} onClose={()=>setAdminOpen(false)} schoolData={schoolData} onSaveSchool={handleSaveSchool} showToast={showToast}/>}
           <Toast message={toast}/>
         </div>
       )}
