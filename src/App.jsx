@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from './supabase';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GLOBAL STYLES
@@ -28,11 +29,7 @@ const GLOBAL_CSS = `
 // SHARED DATA
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DEMO_USERS = [
-  { email:"admin@cloudtech.aero",    password:"admin123",    role:"admin",    name:"brodydemore" },
-  { email:"regional@cloudtech.aero", password:"regional123", role:"regional", name:"Regional Mgr" },
-  { email:"school@cloudtech.aero",   password:"school123",   role:"school",   name:"Flight School" },
-];
+// Auth handled by Supabase
 
 const STATES_DATA = [
   { name:"Alabama",       abbr:"AL", schools:4,  aircraft:22,  hours:1840,  status:"nominal"  },
@@ -262,14 +259,17 @@ function LoginPage({ onLogin }) {
 
   useEffect(() => { setTimeout(() => setMounted(true), 100); }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setError(""); setLoading(true);
-    setTimeout(() => {
-      const match = DEMO_USERS.find(u => u.email === email && u.password === password);
-      onLogin(match || { email, role, name: email.split("@")[0] });
-      setLoading(false);
-    }, 1800);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      onLogin({ email, role, name: email.split("@")[0], id: data.user.id });
+    } catch (err) {
+      setError("Invalid email or password.");
+    }
+    setLoading(false);
   };
 
   const inp = (name) => ({
@@ -1036,6 +1036,21 @@ export default function App() {
   const [transition, setTransition] = useState(false);
   const [fleet,      setFleet]      = useState(INITIAL_FLEET);
   const [toast,      setToast]      = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for existing session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setUser({ email: session.user.email, name: session.user.email.split("@")[0], role: "admin", id: session.user.id });
+      setAuthLoading(false);
+    });
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) setUser({ email: session.user.email, name: session.user.email.split("@")[0], role: "admin", id: session.user.id });
+      else setUser(null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(null), 3500); };
 
@@ -1044,8 +1059,9 @@ export default function App() {
     setTimeout(() => { setUser(userData); setTransition(false); }, 500);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setTransition(true);
+    await supabase.auth.signOut();
     setTimeout(() => { setUser(null); setPage("OVERVIEW"); setTransition(false); }, 500);
   };
 
@@ -1074,7 +1090,11 @@ export default function App() {
         )}
       </div>
 
-      {!user ? (
+      {authLoading ? (
+        <div style={{ minHeight:"100vh", background:"#060b11", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:"28px", height:"28px", border:"2px solid rgba(56,189,248,0.2)", borderTopColor:"#38BDF8", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
+        </div>
+      ) : !user ? (
         <LoginPage onLogin={handleLogin}/>
       ) : (
         <div style={{ minHeight:"100vh", background:"#060b11", color:"#e2e8f0" }}>
